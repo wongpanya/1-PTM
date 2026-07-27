@@ -1,41 +1,40 @@
 import streamlit as st
 
-from src.analytics.metrics import overview_metrics
-from src.ingestion.loaders import load_dataset
+from src.ingestion.data_access import scalar
+from src.utils.config import load_yaml
+from src.utils.ui import configure_page, render_database_status, render_header, render_table_status
 
 
-st.set_page_config(
-    page_title="ODOS Policy Analytics",
-    page_icon="ODOS",
-    layout="wide",
-)
+configure_page("Home")
 
-st.title("ODOS Policy Analytics Prototype")
-st.caption("ระบบต้นแบบเพื่อสาธิตการวิเคราะห์ข้อมูลผู้รับทุนเชิงนโยบาย")
+config = load_yaml("config/app_config.yaml")
+render_header(config["app"]["title"], config["app"]["subtitle_th"])
 
-df = load_dataset()
-metrics = overview_metrics(df)
+if render_database_status():
+    total_students = scalar("SELECT COUNT(*) FROM students") or 0
+    imported_rows = scalar("SELECT COALESCE(SUM(rows_imported), 0) FROM data_import_log") or 0
+    audit_events = scalar("SELECT COUNT(*) FROM audit_logs") or 0
 
-st.info(
-    "Prototype นี้เป็นระบบสนับสนุนการวิเคราะห์เชิงนโยบาย "
-    "ไม่ใช่ระบบตัดสินใจจัดสรรทุนอัตโนมัติ และแสดงผลแบบ aggregate เป็นหลัก"
-)
+    cols = st.columns(3)
+    cols[0].metric("จำนวนระเบียนผู้รับทุนในฐานกลาง", f"{int(total_students):,}")
+    cols[1].metric("จำนวนระเบียนที่ import", f"{int(imported_rows):,}")
+    cols[2].metric("จำนวน audit events", f"{int(audit_events):,}")
 
-cols = st.columns(4)
-cols[0].metric("จำนวนผู้รับทุน", f"{metrics['total_recipients']:,}")
-cols[1].metric("อัตราสำเร็จการศึกษา", f"{metrics['completion_rate']}%")
-cols[2].metric("อัตราความเสี่ยงทุน", f"{metrics['scholarship_risk_rate']}%")
-cols[3].metric("ข้อมูลรายได้ที่ใช้ได้", f"{metrics['income_availability_rate']}%")
+render_table_status()
 
-st.subheader("หน้าในระบบ")
+st.subheader("Navigation")
 st.markdown(
     """
-- Overview
-- Data Quality
-- Analytics
-- Risk & Forecast
-- Policy Recommendation
-- External Indicators
-- Governance
+ใช้เมนูด้านซ้ายเพื่อเปิด 7 หน้าหลัก:
+
+1. Overview
+2. Data Quality
+3. Analytics
+4. Risk & Forecast
+5. Policy Recommendation
+6. External Indicators
+7. Governance
 """
 )
+
+st.warning("Phase 3 ยังเป็นโครงระบบและฐานข้อมูลกลาง ยังไม่เปิด analytics, risk model หรือ recommendation เชิงลึก")

@@ -1,0 +1,29 @@
+app:
+  title: ODOS Policy Analytics Prototype
+  subtitle_th: ระบบต้นแบบเพื่อสาธิตการวิเคราะห์ข้อมูลผู้รับทุนเชิงนโยบาย
+  language: th
+  phase: Phase 3
+  analytics_enabled: false
+  default_database: data/processed/odos_policy_analytics.sqlite
+  default_sample: data/sample/modeling_dataset_no_pii.csv
+theme:
+  primary_color: "#1F4D78"
+  accent_color: "#2E74B5"
+  background_color: "#F8FAFC"
+  warning_color: "#B45309"
+  success_color: "#047857"
+navigation:
+  - label: Overview
+    file: pages/01_overview.py
+  - label: Data Quality
+    file: pages/02_data_quality.py
+  - label: Analytics
+    file: pages/03_analytics.py
+  - label: Risk & Forecast
+    file: pages/04_risk_forecast.py
+  - label: Policy Recommendation
+    file: pages/05_policy_recommendation.py
+  - label: External Indicators
+    file: pages/06_external_indicators.py
+  - label: Governance
+    file: pages/07_governance.py

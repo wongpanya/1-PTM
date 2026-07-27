@@ -1,27 +1,24 @@
-from pathlib import Path
-
-import pandas as pd
 import streamlit as st
 
+from src.ingestion.data_access import scalar
+from src.utils.ui import configure_page, render_database_status, render_header
 
-st.title("External Indicators")
-st.caption("ข้อมูลเสริมรายปีสำหรับ ROI/SROI, workforce demand และ national impact")
 
-template_path = Path("data/reference/annual_external_indicators_template.csv")
-if template_path.exists():
-    template = pd.read_csv(template_path)
-    st.dataframe(template, use_container_width=True)
-else:
-    st.warning("ยังไม่พบ template ข้อมูลเสริมรายปี")
+configure_page("External Indicators")
+render_header("External Indicators", "พื้นที่เตรียมข้อมูลเสริมรายปี")
+
+if render_database_status():
+    count = scalar("SELECT COUNT(*) FROM external_indicators") or 0
+    st.metric("รายการ template ข้อมูลเสริมรายปี", f"{int(count):,}")
 
 st.markdown(
     """
-ข้อมูลเสริมใน Prototype เป็น template ก่อน เช่น:
+ข้อมูลเสริมรายปีจะใช้รองรับ:
 
-- ต้นทุนทุนรายปี/ประเทศ/สาขา
-- ตลาดแรงงานและความต้องการกำลังคน
-- รายได้เฉลี่ยตามสาขา/พื้นที่
-- GDP หรือตัวชี้วัดจังหวัด
+- ต้นทุนทุน
+- ตลาดแรงงาน
+- รายได้เฉลี่ย
+- GDP/ตัวชี้วัดจังหวัด
 - SDGs และ policy priority
 """
 )

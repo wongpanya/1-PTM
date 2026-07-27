@@ -1,19 +1,16 @@
 import streamlit as st
 
-from src.ingestion.loaders import load_dataset
-from src.policy.recommendations import field_recommendations
+from src.utils.ui import configure_page, render_database_status, render_header
 
 
-st.title("Policy Recommendation")
-st.caption("ข้อเสนอเป็นการสนับสนุนการวิเคราะห์ ไม่ใช่คำสั่งจัดสรรทุนอัตโนมัติ")
+configure_page("Policy Recommendation")
+render_header("Policy Recommendation", "พื้นที่เตรียมสำหรับข้อเสนอเชิงนโยบาย")
 
-df = load_dataset()
-recommendations = field_recommendations(df)
+render_database_status()
 
-st.subheader("สาขาที่มีสัญญาณเชิงนโยบายดี")
-st.dataframe(recommendations, use_container_width=True)
-
-st.info(
-    "คะแนนนี้ใช้ completion, employment readiness และ field-job fit จากข้อมูลที่มีใน Prototype "
-    "ยังไม่รวมต้นทุนทุน ตลาดแรงงาน GDP หรือ SDGs รายปี"
+st.warning("Policy recommendation ยังไม่ถูก implement ใน Phase 3")
+st.markdown(
+    """
+ฐานข้อมูลมีตาราง `policy_recommendations` สำหรับรองรับข้อเสนอใน Phase ถัดไป โดยข้อเสนอทั้งหมดต้องอ้างอิงข้อมูลที่มีและระบุข้อจำกัด
+"""
 )

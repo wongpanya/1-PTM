@@ -12,11 +12,14 @@ echo Tests and validation
 echo ==========================================
 echo.
 
+"%PY%" scripts\run_unit_tests.py
+if errorlevel 1 exit /b 1
+
 "%PY%" -m pytest
 if errorlevel 1 (
   echo.
-  echo pytest failed or is not installed. If missing, run:
-  echo   pip install -r requirements.txt
+  echo pytest failed or is not installed. Continuing because baseline unittest suite already passed.
+  echo To enable pytest, run: pip install -r requirements.txt
   echo.
 )
 

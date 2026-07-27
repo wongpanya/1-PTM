@@ -8,10 +8,10 @@ No-PII CSV sample
       v
 src/ingestion/loaders.py
       |
-      +--> Overview / Analytics metrics
-      +--> Data Quality checks
-      +--> Risk Score
-      +--> Policy Recommendation
+      +--> Phase 3 SQLite schema
+      +--> Streamlit shell and navigation
+      +--> Data Quality report surface
+      +--> Risk/Policy placeholder tables
       +--> Governance checks
 ```
 
@@ -22,6 +22,19 @@ src/ingestion/loaders.py
 - Business logic: `src/*`
 - UI: `app.py` and `pages/*.py`
 - Validation: `scripts/*.py` and `tests/*.py`
+
+## Phase 3 Database Tables
+
+- `students`
+- `education_records`
+- `employment_records`
+- `scholarship_status`
+- `geography_reference`
+- `external_indicators`
+- `data_import_log`
+- `risk_scores`
+- `policy_recommendations`
+- `audit_logs`
 
 ## Data Source
 

@@ -45,11 +45,17 @@ data/sample/validation_data.csv
 Run all required checks:
 
 ```bash
-pytest
+python scripts/run_unit_tests.py
 python scripts/import_data.py
 python scripts/build_database.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
+```
+
+If `pytest` is installed, you may also run:
+
+```bash
+pytest
 ```
 
 Task 3 import and validation workflow:
@@ -84,6 +90,22 @@ Generated local outputs are written to `data/processed/` and are ignored by Git 
 - Phase 0: Locked
 - Phase 1: Ready for prototype development, pending formal data definition sign-off
 - Phase 2: Repository prepared
+- Phase 3: App and central SQLite schema scaffolded
+
+## Database Schema
+
+The Phase 3 prototype database initializes these tables:
+
+- `students`
+- `education_records`
+- `employment_records`
+- `scholarship_status`
+- `geography_reference`
+- `external_indicators`
+- `data_import_log`
+- `risk_scores`
+- `policy_recommendations`
+- `audit_logs`
 
 ## Production Roadmap
 

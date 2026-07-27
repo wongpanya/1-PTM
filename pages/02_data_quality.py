@@ -1,19 +1,20 @@
-import plotly.express as px
+from pathlib import Path
+
 import streamlit as st
 
-from src.ingestion.loaders import load_dataset
-from src.validation.data_quality import completeness_table
+from src.utils.config import PROJECT_ROOT
+from src.utils.ui import configure_page, render_database_status, render_header
 
 
-st.title("Data Quality")
-df = load_dataset()
-quality = completeness_table(df)
+configure_page("Data Quality")
+render_header("Data Quality", "โครงหน้าสำหรับรายงานคุณภาพข้อมูล")
 
-st.metric("จำนวน Field", len(df.columns))
-st.metric("จำนวน Records", len(df))
+render_database_status()
 
-st.plotly_chart(
-    px.bar(quality.head(20), x="completeness_pct", y="field", orientation="h", title="20 fields ที่ completeness ต่ำสุด"),
-    use_container_width=True,
-)
-st.dataframe(quality, use_container_width=True)
+report_path = PROJECT_ROOT / "data/processed/reports/validation_report.md"
+if report_path.exists():
+    st.markdown(report_path.read_text(encoding="utf-8"))
+else:
+    st.warning("ยังไม่พบ validation report กรุณารัน `python scripts/validate_data.py`")
+
+st.caption("Phase 3 แสดงเฉพาะรายงาน validation ระดับระบบ ยังไม่ลงรายละเอียด analytics")

@@ -61,12 +61,18 @@ The privacy workflow checks:
 
 ## SQLite Tables
 
-`scripts/build_database.py` builds:
+`scripts/build_database.py` builds the Phase 3 central SQLite schema:
 
-- `modeling_dataset_no_pii`
 - `students`
-- `education`
-- `employment`
+- `education_records`
+- `employment_records`
+- `scholarship_status`
+- `geography_reference`
+- `external_indicators`
+- `data_import_log`
+- `risk_scores`
+- `policy_recommendations`
+- `audit_logs`
 
 ## Audit Log
 

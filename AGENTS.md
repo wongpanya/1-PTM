@@ -43,12 +43,14 @@ Build an explainable prototype for scholarship policy analytics. The system demo
 Before completing a development task, run:
 
 ```bash
-pytest
+python scripts/run_unit_tests.py
 python scripts/import_data.py
 python scripts/build_database.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
 ```
+
+If `pytest` is installed, it is also acceptable to run `pytest` after the baseline unit test command.
 
 If dependencies are not installed yet, create the environment first:
 

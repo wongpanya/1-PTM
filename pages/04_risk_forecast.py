@@ -1,26 +1,16 @@
-import pandas as pd
 import streamlit as st
 
-from src.ingestion.loaders import load_dataset
-from src.risk.scoring import score_row
+from src.utils.ui import configure_page, render_database_status, render_header
 
 
-st.title("Risk & Forecast")
-st.caption("คะแนนใน Prototype เป็น decision support และต้องแสดงเหตุผลเสมอ")
+configure_page("Risk & Forecast")
+render_header("Risk & Forecast", "พื้นที่เตรียมสำหรับคะแนนความเสี่ยงและการพยากรณ์")
 
-df = load_dataset()
-scored = []
-for _, row in df.iterrows():
-    result = score_row(row.to_dict())
-    scored.append({
-        "odos_uid": row["odos_uid"],
-        "cohort": row.get("cohort"),
-        "province": row.get("province"),
-        "current_field_group": row.get("current_field_group"),
-        "risk_score": result["risk_score"],
-        "explanations": "; ".join(c["explanation_th"] for c in result["components"]),
-    })
+render_database_status()
 
-risk_df = pd.DataFrame(scored).sort_values("risk_score", ascending=False)
-st.metric("ค่าเฉลี่ย Risk Score", round(risk_df["risk_score"].mean(), 2))
-st.dataframe(risk_df.head(50), use_container_width=True)
+st.warning("Risk scoring และ forecast ยังไม่ถูกเปิดใช้งานใน Phase 3")
+st.markdown(
+    """
+ฐานข้อมูลมีตาราง `risk_scores` สำหรับรองรับผลลัพธ์ใน Phase ถัดไป โดยทุกคะแนนต้องมี component scores และคำอธิบาย
+"""
+)

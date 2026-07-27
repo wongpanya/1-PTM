@@ -20,10 +20,20 @@ Task 3 is accepted when:
 - import/database actions append to audit log.
 - generated processed data remains untracked by Git.
 
+Phase 3 is accepted when:
+
+- `streamlit run app.py` starts successfully.
+- The app home page returns HTTP 200 locally.
+- Seven page files exist under `pages/`.
+- The database initializes all required Phase 3 tables.
+- App pages use the SQLite data access layer.
+- The app does not display row-level PII.
+- Basic unit tests pass.
+
 ## Required Commands
 
 ```bash
-pytest
+python scripts/run_unit_tests.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
 ```
