@@ -34,7 +34,7 @@ No raw Excel file is read during dashboard runtime.
 - Completion Rate
 - Dropout or scholarship-risk Rate
 - Employment Rate
-- Income Distribution
+- Selectable dashboard views: KPI comparison bar chart, donut proportion chart, aggregate income box plot, cohort outcome line chart, and country-field heatmap
 - Field-Job Fit
 - Local Development Fit
 - Outcome comparison by cohort
@@ -46,7 +46,7 @@ All KPI definitions, formulas, source columns, and limitations are documented in
 
 ## Privacy
 
-The pages display aggregate tables and charts only. The shared analytics loader removes obvious forbidden display columns before dashboard use.
+The pages display aggregate tables and charts only. The shared analytics loader removes obvious forbidden display columns before dashboard use. Box plots use aggregate quartile statistics rather than row-level income values, and all grouped views exclude groups below the configured minimum size.
 
 ## Limitations
 

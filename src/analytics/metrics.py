@@ -167,6 +167,35 @@ def income_summary(df: pd.DataFrame) -> dict[str, float | int]:
     }
 
 
+def income_box_summary(
+    df: pd.DataFrame,
+    group_column: str,
+    value_column: str = "income_monthly_est",
+    min_size: int | None = None,
+) -> pd.DataFrame:
+    """Return privacy-safe aggregate statistics for a grouped income box plot."""
+    required = {group_column, value_column}
+    if not required.issubset(df.columns):
+        return pd.DataFrame(columns=[group_column, "count", "minimum", "q1", "median", "q3", "maximum"])
+
+    working = df[[group_column, value_column]].copy()
+    working[group_column] = working[group_column].fillna(AGGREGATE_MISSING_LABEL)
+    working[value_column] = pd.to_numeric(working[value_column], errors="coerce")
+    working = working.dropna(subset=[value_column])
+    if working.empty:
+        return pd.DataFrame(columns=[group_column, "count", "minimum", "q1", "median", "q3", "maximum"])
+
+    summary = working.groupby(group_column, dropna=False)[value_column].agg(
+        count="size",
+        minimum="min",
+        q1=lambda values: values.quantile(0.25),
+        median="median",
+        q3=lambda values: values.quantile(0.75),
+        maximum="max",
+    ).reset_index()
+    return remove_small_groups(summary, min_size=min_size).sort_values("median", ascending=False)
+
+
 def field_completeness(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
     total = max(len(df), 1)

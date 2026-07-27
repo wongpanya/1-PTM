@@ -6,6 +6,7 @@ from src.analytics.metrics import (
     apply_filters,
     data_quality_summary,
     grouped_counts,
+    income_box_summary,
     income_summary,
     overview_metrics,
     rate_by_group,
@@ -70,6 +71,16 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(summary["median_income"], 20000)
         grouped = grouped_counts(df, ["current_country", "current_field_group"])
         self.assertIn("count", grouped.columns)
+
+    def test_income_box_summary_is_aggregate_and_suppresses_small_groups(self):
+        df = pd.DataFrame({
+            "field": ["A", "A", "A", "B", "B"],
+            "income_monthly_est": [10000, 20000, 30000, 40000, 50000],
+        })
+        summary = income_box_summary(df, "field", min_size=3)
+        self.assertEqual(list(summary["field"]), ["A"])
+        self.assertEqual(int(summary.iloc[0]["count"]), 3)
+        self.assertEqual(float(summary.iloc[0]["median"]), 20000.0)
 
     def test_data_quality_summary_marks_readiness_and_issues(self):
         df = pd.DataFrame({
