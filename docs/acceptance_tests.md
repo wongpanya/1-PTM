@@ -30,6 +30,16 @@ Phase 3 is accepted when:
 - The app does not display row-level PII.
 - Basic unit tests pass.
 
+Phase 4 is accepted when:
+
+- Raw data is not modified.
+- Pipeline can be run repeatedly and produces the same cleaned dataset.
+- Processing log exists.
+- Before-after report exists.
+- Validation issues are recorded instead of silently deleting records.
+- Data quality scores are produced.
+- Every core transformation has tests.
+
 ## Required Commands
 
 ```bash

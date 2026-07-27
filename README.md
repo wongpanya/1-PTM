@@ -91,6 +91,17 @@ Generated local outputs are written to `data/processed/` and are ignored by Git 
 - Phase 1: Ready for prototype development, pending formal data definition sign-off
 - Phase 2: Repository prepared
 - Phase 3: App and central SQLite schema scaffolded
+- Phase 4: Data pipeline and data quality workflow implemented
+
+## Phase 4 Data Pipeline
+
+Run the Excel-to-cleaned-data pipeline:
+
+```bash
+python scripts/run_phase4_pipeline.py
+```
+
+The pipeline reads the private raw Excel copy outside the public repo, checks required sheets and columns, cleans values, validates records, writes data quality scores, and records processing logs. Outputs are written to `data/processed/phase4/` and are not committed.
 
 ## Database Schema
 
