@@ -50,6 +50,17 @@ Phase 5 is accepted when:
 - Analytics shows completion, dropout proxy, employment, income, field-job fit, local fit, and comparisons by cohort/country/field.
 - Metrics have unit tests that can be compared with SQL or spreadsheet samples.
 
+Phase 6 is accepted when:
+
+- Every risk score has component explanations, calculated timestamp, rule version, and limitations.
+- Risk level Low, Medium, and High is derived from `config/risk_rules.yaml`.
+- Graduation success uses rule-based status classes and documents ML readiness requirements.
+- Policy recommendation rankings come from formulas and weights in `config/policy_recommendation.yaml`.
+- Changing weights recalculates recommendation scores.
+- Analysis results are separated from policy recommendation text.
+- Recommendations include evidence columns, formula, weights, rule version, and limitations.
+- No unsupported AI-generated recommendation text is used.
+
 ## Required Commands
 
 ```bash

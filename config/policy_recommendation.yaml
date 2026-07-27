@@ -1,0 +1,39 @@
+schema_version: 0.1
+policy_recommendation:
+  rule_version: policy-ranking-0.1-prototype
+  expert_approval_status: pending_project_expert_review
+  minimum_records: 20
+  limitations_th:
+    - ข้อเสนอเป็น Ranking จากข้อมูลที่มีใน Prototype ไม่ใช่คำสั่งจัดสรรทุนอัตโนมัติ
+    - ยังไม่มีตัวชี้วัดภายนอกครบถ้วน เช่น ความเหลื่อมล้ำและความต้องการกำลังคนรายพื้นที่
+    - ทุกน้ำหนักสามารถปรับได้และต้องผ่านการรับรองจากผู้เชี่ยวชาญก่อนใช้งานจริง
+  field_recommendation:
+    weights:
+      completion_rate: 25
+      employment_rate: 25
+      field_job_fit: 20
+      income_outcome: 15
+      local_development_fit: 10
+      data_completeness: 5
+    formula: weighted_sum_of_normalized_metrics
+    evidence_columns:
+      - current_field_group
+      - target_graduation_success
+      - target_employment_ready
+      - field_job_fit_level
+      - income_monthly_est
+      - local_fit_level
+  area_based_allocation:
+    weights:
+      existing_recipient_base: 15
+      area_success: 25
+      local_return_fit: 20
+      external_inequality_need: 20
+      workforce_demand: 20
+    formula: weighted_sum_with_external_indicator_placeholders
+    evidence_columns:
+      - province
+      - district
+      - target_graduation_success
+      - local_fit_level
+      - external_indicators

@@ -93,6 +93,7 @@ Generated local outputs are written to `data/processed/` and are ignored by Git 
 - Phase 3: App and central SQLite schema scaffolded
 - Phase 4: Data pipeline and data quality workflow implemented
 - Phase 5: Overview, Data Quality, and Analytics dashboards implemented
+- Phase 6: Rule-based risk, graduation status, and traceable policy ranking implemented
 
 ## Phase 4 Data Pipeline
 
@@ -113,6 +114,16 @@ streamlit run app.py
 ```
 
 The first three pages now use aggregate no-PII data for Overview, Data Quality, and Analytics. KPI definitions and formulas are documented in `config/metrics.yaml`; implementation notes are in `docs/dashboard_analytics.md`.
+
+## Phase 6 Risk and Policy
+
+Risk scoring and policy recommendations are explainable prototype rules:
+
+- Risk and graduation rules: `config/risk_rules.yaml`
+- Policy ranking weights: `config/policy_recommendation.yaml`
+- Notes and limitations: `docs/risk_forecast_policy.md`
+
+Weights can be adjusted in the Policy Recommendation page and the ranking recalculates from data-backed formulas.
 
 ## Database Schema
 

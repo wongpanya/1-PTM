@@ -1,32 +1,92 @@
-schema_version: 0.1
+schema_version: 0.2
 risk_score:
+  rule_version: risk-rules-0.2-prototype
+  expert_approval_status: pending_project_expert_review
   max_score: 100
+  levels:
+    low:
+      min: 0
+      max: 24
+      label_th: Low
+    medium:
+      min: 25
+      max: 59
+      label_th: Medium
+    high:
+      min: 60
+      max: 100
+      label_th: High
+  limitations_th:
+    - คะแนนนี้เป็น Rule-based Prototype เพื่อช่วยจัดลำดับการตรวจสอบ ไม่ใช่คำตัดสินอัตโนมัติ
+    - น้ำหนักคะแนนต้องได้รับการรับรองจากผู้เชี่ยวชาญโครงการก่อนใช้งานจริง
+    - ผลลัพธ์ขึ้นกับความครบถ้วนของข้อมูล Phase 4 และอาจเปลี่ยนได้เมื่อปรับนิยามข้อมูล
   components:
-    scholarship_status:
-      weight: 35
-      positive_when: target_scholarship_risk == 1
-      explanation_th: สถานะโครงการอยู่ในกลุ่มเสี่ยง เช่น ลาออก พ้นสภาพ เกินระยะเวลา หรือสละสิทธิ์
-    tracking:
+    unclear_education_status:
+      weight: 10
+      positive_when: project_condition_status is null
+      explanation_th: สถานะการศึกษาไม่ชัดเจนหรือยังไม่มีข้อมูลเพียงพอ
+    over_study_duration:
       weight: 20
+      positive_when: target_scholarship_risk == 1
+      explanation_th: สถานะทุนอยู่ในกลุ่มเสี่ยง เช่น เกินระยะเวลา ลาออก พ้นสภาพ หรือสละสิทธิ์
+    tracking_missing:
+      weight: 15
       positive_when: target_tracking_risk == 1
-      explanation_th: ข้อมูลหลังสำเร็จอยู่ระหว่างติดตามหรือไม่พบในฐานข้อมูล
+      explanation_th: ข้อมูลการติดตามหลังทุนไม่ครบถ้วนหรือยังอยู่ระหว่างติดตาม
+    no_report:
+      weight: 20
+      positive_when: current_status contains ไม่พบ
+      explanation_th: ไม่พบสถานะหรือไม่พบข้อมูลในฐานข้อมูลปัจจุบัน
+    missing_employment:
+      weight: 10
+      positive_when: employment_type is null
+      explanation_th: ไม่มีข้อมูลอาชีพสำหรับประเมินผลลัพธ์หลังทุน
     field_mismatch:
-      weight: 15
+      weight: 10
       positive_when: target_field_mismatch == 1
-      explanation_th: งานไม่สอดคล้องหรือสอดคล้องน้อยกับสาขาที่ศึกษา
+      explanation_th: งานไม่ตรงหรือสอดคล้องน้อยกับสาขาที่ศึกษา
     local_mismatch:
-      weight: 15
+      weight: 10
       positive_when: target_local_mismatch == 1
-      explanation_th: งานไม่สอดคล้องหรือสอดคล้องน้อยกับท้องถิ่น
-    missing_income:
-      weight: 5
-      positive_when: income_monthly_est is null
-      explanation_th: ไม่มีข้อมูลรายได้สำหรับใช้วิเคราะห์ผลลัพธ์ทางเศรษฐกิจ
-    missing_gpa:
-      weight: 5
-      positive_when: gpa_numeric is null
-      explanation_th: ไม่มีข้อมูล GPA สำหรับใช้วิเคราะห์ผลสัมฤทธิ์การศึกษา
-    not_employment_ready:
-      weight: 5
-      positive_when: target_employment_ready == 0
-      explanation_th: ยังไม่พบสถานะประกอบอาชีพเชิงบวกในข้อมูลปัจจุบัน
+      explanation_th: งานไม่สอดคล้องหรือสอดคล้องน้อยกับการพัฒนาท้องถิ่น
+    abroad_return_unknown:
+      weight: 15
+      positive_when_all:
+        - current_country != ประเทศไทย
+        - current_country is not null
+        - restart_thailand_date is null
+      explanation_th: ทำงานหรือพำนักต่างประเทศและยังไม่พบข้อมูลสถานะกลับประเทศไทย
+graduation_success:
+  rule_version: graduation-rules-0.1-prototype
+  expected_duration_years: 4.5
+  delayed_duration_years: 6.0
+  statuses:
+    on_time:
+      label_th: สำเร็จตามระยะเวลา
+      condition: target_graduation_success == 1 and study_duration_years <= 4.5
+    delayed:
+      label_th: สำเร็จล่าช้า
+      condition: target_graduation_success == 1 and study_duration_years > 4.5
+    exited:
+      label_th: ลาออกหรือพ้นสภาพ
+      condition_any:
+        - project_condition_status contains ลาออก
+        - project_condition_status contains พ้นสภาพ
+        - project_condition_status contains สละสิทธิ์
+    studying:
+      label_th: อยู่ระหว่างศึกษา
+      condition: project_condition_status contains กำลังศึกษา
+    over_duration_risk:
+      label_th: เสี่ยงเกินระยะเวลา
+      condition: target_scholarship_risk == 1
+    unknown:
+      label_th: ยังจำแนกไม่ได้
+      condition: fallback
+  ml_readiness:
+    status: not_enabled_in_prototype
+    allowed_models: [Logistic Regression, Decision Tree, Random Forest]
+    requirements:
+      - Lock official outcome definitions.
+      - Split train/test by cohort or time.
+      - Exclude leakage columns created after the outcome date.
+      - Report feature importance and validation metrics before policy use.
