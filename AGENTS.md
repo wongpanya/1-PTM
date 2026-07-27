@@ -44,6 +44,8 @@ Before completing a development task, run:
 
 ```bash
 pytest
+python scripts/import_data.py
+python scripts/build_database.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
 ```

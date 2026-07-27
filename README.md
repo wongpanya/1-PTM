@@ -46,9 +46,22 @@ Run all required checks:
 
 ```bash
 pytest
+python scripts/import_data.py
+python scripts/build_database.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
 ```
+
+Task 3 import and validation workflow:
+
+```bash
+python scripts/import_data.py --source data/sample/modeling_dataset_no_pii.csv --dataset-name modeling_dataset_no_pii
+python scripts/build_database.py
+python scripts/validate_data.py
+python scripts/privacy_check.py
+```
+
+Generated local outputs are written to `data/processed/` and are ignored by Git when appropriate.
 
 ## Data Policy
 
