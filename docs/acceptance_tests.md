@@ -61,6 +61,16 @@ Phase 6 is accepted when:
 - Recommendations include evidence columns, formula, weights, rule version, and limitations.
 - No unsupported AI-generated recommendation text is used.
 
+Phase 7 is accepted when:
+
+- External indicator template has the required annual fields.
+- PII masking removes forbidden columns and masks PII-like values.
+- Viewer role cannot import data, export data, or view audit logs.
+- Important import/export actions are written to audit/export logs.
+- The system displays a Prototype notice.
+- Groups smaller than the minimum group size are suppressed.
+- Export is aggregate-only and privacy tests pass.
+
 ## Required Commands
 
 ```bash

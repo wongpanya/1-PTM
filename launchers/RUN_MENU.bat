@@ -16,8 +16,9 @@ echo 4. Phase 3 - Run Streamlit app
 echo 5. Phase 4 - Run data pipeline and quality checks
 echo 6. Phase 5 - Run dashboard and analytics
 echo 7. Phase 6 - Run risk, forecast, and policy
-echo 8. Tests  - Run tests and checks
-echo 9. Git    - Show repository status
+echo 8. Phase 7 - Run external indicators and governance
+echo 9. Tests  - Run tests and checks
+echo G. Git    - Show repository status
 echo X. Exit
 echo.
 set /p choice=Select option:
@@ -30,8 +31,9 @@ if "%choice%"=="4" call "%~dp004_phase3_run_app.bat" & goto menu
 if "%choice%"=="5" call "%~dp004_phase4_data_pipeline.bat" & pause & goto menu
 if "%choice%"=="6" call "%~dp005_phase5_dashboard.bat" & goto menu
 if "%choice%"=="7" call "%~dp006_phase6_risk_policy.bat" & goto menu
-if "%choice%"=="8" call "%~dp005_run_tests.bat" & pause & goto menu
-if "%choice%"=="9" call "%~dp006_git_status.bat" & pause & goto menu
+if "%choice%"=="8" call "%~dp007_phase7_governance.bat" & goto menu
+if "%choice%"=="9" call "%~dp005_run_tests.bat" & pause & goto menu
+if /i "%choice%"=="G" call "%~dp006_git_status.bat" & pause & goto menu
 if /i "%choice%"=="X" exit /b 0
 
 echo Invalid option.

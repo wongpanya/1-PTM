@@ -1,0 +1,28 @@
+schema_version: 0.1
+prototype_notice_th: ระบบนี้ยังเป็น Prototype เพื่อสาธิตแนวคิดเชิงนโยบาย ไม่ใช่ Production System
+minimum_group_size: 5
+roles:
+  Admin:
+    can_import: true
+    can_export_aggregate: true
+    can_view_audit: true
+    description_th: ผู้ดูแลระบบต้นแบบและข้อมูล
+  Analyst:
+    can_import: false
+    can_export_aggregate: true
+    can_view_audit: true
+    description_th: นักวิเคราะห์ที่ดูผลรวมและส่งออกข้อมูล aggregate ได้
+  Viewer:
+    can_import: false
+    can_export_aggregate: false
+    can_view_audit: false
+    description_th: ผู้ชมผลลัพธ์รวม ไม่เห็นเมนูนำเข้าข้อมูลและไม่ส่งออกข้อมูล
+export:
+  allowed_scope: aggregate_only
+  allowed_formats: [csv]
+  export_log_path: data/processed/export_log.jsonl
+data_use_notice:
+  - ใช้ข้อมูลเพื่อสาธิตระบบสนับสนุนนโยบายเท่านั้น
+  - ห้ามใช้ผลลัพธ์ Prototype เพื่อตัดสินใจจัดสรรทุนอัตโนมัติ
+  - ห้ามส่งออกหรือเปิดเผยข้อมูลระดับบุคคล
+  - กลุ่มข้อมูลที่มีจำนวนน้อยกว่า minimum group size ต้องถูกปกปิด

@@ -94,6 +94,7 @@ Generated local outputs are written to `data/processed/` and are ignored by Git 
 - Phase 4: Data pipeline and data quality workflow implemented
 - Phase 5: Overview, Data Quality, and Analytics dashboards implemented
 - Phase 6: Rule-based risk, graduation status, and traceable policy ranking implemented
+- Phase 7: External indicator template and governance controls implemented
 
 ## Phase 4 Data Pipeline
 
@@ -124,6 +125,16 @@ Risk scoring and policy recommendations are explainable prototype rules:
 - Notes and limitations: `docs/risk_forecast_policy.md`
 
 Weights can be adjusted in the Policy Recommendation page and the ranking recalculates from data-backed formulas.
+
+## Phase 7 External Indicators and Governance
+
+External indicator and governance controls are configured through:
+
+- Annual template: `data/reference/annual_external_indicators_template.csv`
+- Governance rules: `config/governance.yaml`
+- Notes: `docs/external_indicators_governance.md`
+
+The prototype includes role mockups, minimum group size suppression, PII masking, audit logs, export logs, and aggregate-only CSV export.
 
 ## Database Schema
 

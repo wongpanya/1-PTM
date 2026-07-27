@@ -69,24 +69,21 @@ tables:
       district: TEXT
       economic_corridor: TEXT
   external_indicators:
-    primary_key: indicator_id
+    primary_key: null
     columns:
-      indicator_id: TEXT
-      fiscal_year: INTEGER
-      indicator_group: TEXT
+      indicator_year: INTEGER
+      indicator_type: TEXT
       indicator_name: TEXT
-      level: TEXT
-      country: TEXT
-      province: TEXT
-      field_group: TEXT
-      industry: TEXT
-      unit: TEXT
+      geography_level: TEXT
+      geography_code: TEXT
+      field_code: TEXT
       value: REAL
-      source_name: TEXT
-      source_url: TEXT
-      updated_at: TEXT
-      confidence_level: TEXT
-      notes: TEXT
+      unit: TEXT
+      source: TEXT
+      source_date: TEXT
+      update_date: TEXT
+      reliability_level: TEXT
+      note: TEXT
   data_import_log:
     primary_key: import_id
     columns:

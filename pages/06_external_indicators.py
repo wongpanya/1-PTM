@@ -1,24 +1,81 @@
+import pandas as pd
 import streamlit as st
 
-from src.ingestion.data_access import scalar
+from src.governance.audit import append_audit_event
+from src.governance.privacy import aggregate_csv_bytes, suppress_small_groups
+from src.utils.config import PROJECT_ROOT, load_yaml
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
 configure_page("External Indicators")
-render_header("External Indicators", "พื้นที่เตรียมข้อมูลเสริมรายปี")
+render_header("External Indicators", "ข้อมูลเสริมรายปีสำหรับต้นทุนทุน ตลาดแรงงาน เศรษฐกิจ สังคม และพื้นที่")
+render_database_status()
 
-if render_database_status():
-    count = scalar("SELECT COUNT(*) FROM external_indicators") or 0
-    st.metric("รายการ template ข้อมูลเสริมรายปี", f"{int(count):,}")
+governance = load_yaml("config/governance.yaml")
+roles = governance["roles"]
 
-st.markdown(
-    """
-ข้อมูลเสริมรายปีจะใช้รองรับ:
+with st.sidebar:
+    role = st.selectbox("Role Mockup", list(roles.keys()), index=2)
+    st.caption(roles[role]["description_th"])
 
-- ต้นทุนทุน
-- ตลาดแรงงาน
-- รายได้เฉลี่ย
-- GDP/ตัวชี้วัดจังหวัด
-- SDGs และ policy priority
-"""
-)
+st.info(governance["prototype_notice_th"])
+
+template_path = PROJECT_ROOT / "data/reference/annual_external_indicators_template.csv"
+template_df = pd.read_csv(template_path)
+
+cols = st.columns(4)
+cols[0].metric("Template Fields", f"{len(template_df.columns):,}")
+cols[1].metric("Sample Rows", f"{len(template_df):,}")
+cols[2].metric("Minimum Group Size", governance["minimum_group_size"])
+cols[3].metric("Role", role)
+
+st.subheader("Template ข้อมูลเสริมรายปี")
+st.dataframe(template_df, width="stretch", hide_index=True)
+
+st.subheader("Field Definition")
+field_rows = [
+    {"field": "indicator_year", "description": "ปีของตัวชี้วัด เช่น 2569"},
+    {"field": "indicator_type", "description": "ประเภทตัวชี้วัด เช่น labor_market, cost, inequality"},
+    {"field": "indicator_name", "description": "ชื่อตัวชี้วัด"},
+    {"field": "geography_level", "description": "ระดับพื้นที่ เช่น national, province, district"},
+    {"field": "geography_code", "description": "รหัสพื้นที่ เช่น TH หรือรหัสจังหวัด"},
+    {"field": "field_code", "description": "รหัสสาขาหรือกลุ่มอาชีพ เช่น ICT-AI"},
+    {"field": "value", "description": "ค่าตัวชี้วัด"},
+    {"field": "unit", "description": "หน่วยวัด"},
+    {"field": "source", "description": "หน่วยงานเจ้าของข้อมูล"},
+    {"field": "source_date", "description": "วันที่เผยแพร่"},
+    {"field": "update_date", "description": "วันที่นำเข้าระบบ"},
+    {"field": "reliability_level", "description": "ระดับความน่าเชื่อถือ เช่น official, draft"},
+    {"field": "note", "description": "หมายเหตุ"},
+]
+st.dataframe(field_rows, width="stretch", hide_index=True)
+
+indicator_summary = template_df.groupby(["indicator_year", "indicator_type", "geography_level"], dropna=False).size().reset_index(name="count")
+indicator_summary = suppress_small_groups(indicator_summary, min_size=1)
+
+st.subheader("Aggregate Summary")
+st.dataframe(indicator_summary, width="stretch", hide_index=True)
+
+if roles[role]["can_import"]:
+    st.subheader("Import Mockup")
+    uploaded = st.file_uploader("นำเข้า external indicators CSV ตาม template", type=["csv"])
+    if uploaded is not None:
+        imported = pd.read_csv(uploaded)
+        missing = [column for column in template_df.columns if column not in imported.columns]
+        if missing:
+            st.error(f"ยังขาดคอลัมน์บังคับ: {', '.join(missing)}")
+        else:
+            append_audit_event("external_indicator_import_mockup", {"role": role, "rows": len(imported), "columns": list(imported.columns)})
+            st.success("ตรวจ schema ผ่านและบันทึก import log mockup แล้ว")
+else:
+    st.warning("Role นี้ไม่เห็นเมนูนำเข้าข้อมูล")
+
+if roles[role]["can_export_aggregate"]:
+    st.download_button(
+        "Export Aggregate CSV",
+        data=aggregate_csv_bytes(indicator_summary, "external_indicator_summary.csv", role),
+        file_name="external_indicator_summary.csv",
+        mime="text/csv",
+    )
+else:
+    st.caption("Role นี้ไม่มีสิทธิ์ export ข้อมูล")
