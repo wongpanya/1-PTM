@@ -92,6 +92,7 @@ Generated local outputs are written to `data/processed/` and are ignored by Git 
 - Phase 2: Repository prepared
 - Phase 3: App and central SQLite schema scaffolded
 - Phase 4: Data pipeline and data quality workflow implemented
+- Phase 5: Overview, Data Quality, and Analytics dashboards implemented
 
 ## Phase 4 Data Pipeline
 
@@ -102,6 +103,16 @@ python scripts/run_phase4_pipeline.py
 ```
 
 The pipeline reads the private raw Excel copy outside the public repo, checks required sheets and columns, cleans values, validates records, writes data quality scores, and records processing logs. Outputs are written to `data/processed/phase4/` and are not committed.
+
+## Phase 5 Dashboards
+
+Run the Streamlit prototype:
+
+```bash
+streamlit run app.py
+```
+
+The first three pages now use aggregate no-PII data for Overview, Data Quality, and Analytics. KPI definitions and formulas are documented in `config/metrics.yaml`; implementation notes are in `docs/dashboard_analytics.md`.
 
 ## Database Schema
 

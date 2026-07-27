@@ -24,6 +24,7 @@ launchers/RUN_MENU.bat
 - `003_task3_import_validate.bat`: run Task 3 import, SQLite build, validation report, and privacy check.
 - `03_phase3_run_app.bat`: run the Streamlit prototype app.
 - `04_phase4_data_pipeline.bat`: read raw Excel from the private Phase 1 raw copy, run cleaning, validation, quality scoring, and reports.
+- `05_phase5_dashboard.bat`: refresh Phase 4 cleaned data and open the Phase 5 dashboard pages.
 - `04_run_tests.bat`: run pytest if installed, then data validation and privacy checks.
 - `05_git_status.bat`: show git working tree and recent commits.
 - `004_phase3_run_app.bat`, `005_run_tests.bat`, and `006_git_status.bat`: menu aliases.

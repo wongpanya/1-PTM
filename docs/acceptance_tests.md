@@ -40,6 +40,16 @@ Phase 4 is accepted when:
 - Data quality scores are produced.
 - Every core transformation has tests.
 
+Phase 5 is accepted when:
+
+- Overview, Data Quality, and Analytics pages render from aggregate no-PII data.
+- KPI formulas and definitions are documented in `config/metrics.yaml`.
+- Filters are applied through shared analytics functions.
+- Dashboard tables and charts do not display row-level student records.
+- Data Quality shows completeness, missing values, format or standard issues, and field readiness.
+- Analytics shows completion, dropout proxy, employment, income, field-job fit, local fit, and comparisons by cohort/country/field.
+- Metrics have unit tests that can be compared with SQL or spreadsheet samples.
+
 ## Required Commands
 
 ```bash
