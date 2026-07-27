@@ -46,11 +46,23 @@ class PolicyRecommendationTest(unittest.TestCase):
         changed_b = changed.loc[changed["current_field_group"] == "B", "policy_score"].iloc[0]
         self.assertNotEqual(float(default_b), float(changed_b))
 
-    def test_area_recommendations_include_external_placeholders(self):
+    def test_field_data_completeness_reflects_missing_evidence(self):
+        df = self.sample_df()
+        df.loc[df["current_field_group"] == "B", "income_monthly_est"] = None
+        result = field_recommendations(df, min_records=1)
+        completeness_a = result.loc[result["current_field_group"] == "A", "data_completeness"].iloc[0]
+        completeness_b = result.loc[result["current_field_group"] == "B", "data_completeness"].iloc[0]
+        self.assertGreater(float(completeness_a), float(completeness_b))
+
+    def test_area_recommendations_do_not_invent_external_indicator_values(self):
         result = area_recommendations(self.sample_df(), min_records=1)
         self.assertFalse(result.empty)
         self.assertIn("external_inequality_need", result.columns)
         self.assertIn("workforce_demand", result.columns)
+        self.assertTrue(result["external_inequality_need"].isna().all())
+        self.assertTrue(result["workforce_demand"].isna().all())
+        self.assertEqual(set(result["external_indicator_status"]), {"not_available_in_prototype"})
+        self.assertTrue((result["available_weight"] < 100).all())
         self.assertIn("limitations_th", result.columns)
 
     def test_recommendation_summary(self):

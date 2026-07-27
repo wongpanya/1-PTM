@@ -2,8 +2,8 @@ app:
   title: ODOS Policy Analytics Prototype
   subtitle_th: ระบบต้นแบบเพื่อสาธิตการวิเคราะห์ข้อมูลผู้รับทุนเชิงนโยบาย
   language: th
-  phase: Phase 3
-  analytics_enabled: false
+  phase: Phase 8
+  analytics_enabled: true
   default_database: data/processed/odos_policy_analytics.sqlite
   default_sample: data/sample/modeling_dataset_no_pii.csv
 theme:

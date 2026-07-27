@@ -31,6 +31,8 @@ def field_recommendations(
     working["field_job_fit_ready"] = pd.to_numeric(working["field_job_fit_level"], errors="coerce").fillna(0) >= 2
     working["local_fit_ready"] = pd.to_numeric(working["local_fit_level"], errors="coerce").fillna(0) >= 2
     working["income_monthly_est"] = pd.to_numeric(working["income_monthly_est"], errors="coerce")
+    evidence_columns = [column for column in field_config["evidence_columns"] if column in working]
+    working["data_completeness_row"] = working[evidence_columns].notna().mean(axis=1)
     grouped = working.groupby("current_field_group", dropna=False).agg(
         records=("odos_uid", "count"),
         completion_rate=("target_graduation_success", "mean"),
@@ -38,7 +40,7 @@ def field_recommendations(
         field_job_fit=("field_job_fit_ready", "mean"),
         income_outcome=("income_monthly_est", "median"),
         local_development_fit=("local_fit_ready", "mean"),
-        data_completeness=("current_field_group", lambda series: 1.0 - series.isna().mean()),
+        data_completeness=("data_completeness_row", "mean"),
     ).reset_index()
     grouped = grouped[grouped["records"] >= min_records].copy()
     if grouped.empty:
@@ -90,9 +92,10 @@ def area_recommendations(
         return grouped
 
     grouped["existing_recipient_base"] = _normalize_inverse(grouped["records"])
-    grouped["external_inequality_need"] = 0.5
-    grouped["workforce_demand"] = 0.5
-    grouped["policy_score"] = _weighted_score(grouped, weights)
+    grouped["external_inequality_need"] = pd.NA
+    grouped["workforce_demand"] = pd.NA
+    grouped["external_indicator_status"] = "not_available_in_prototype"
+    grouped["policy_score"], grouped["available_weight"] = _weighted_score_available(grouped, weights)
     grouped["formula"] = area_config["formula"]
     grouped["weights"] = _weights_text(weights)
     grouped["rule_version"] = config["rule_version"]
@@ -104,7 +107,7 @@ def area_recommendations(
         ),
         axis=1,
     )
-    grouped["policy_recommendation"] = "พิจารณาพื้นที่นี้ร่วมกับตัวชี้วัดภายนอกก่อนจัดสรรเชิงนโยบาย"
+    grouped["policy_recommendation"] = "ผลจัดอันดับเบื้องต้นจากข้อมูลผู้รับทุน โดยยังไม่ใช้ตัวชี้วัดภายนอกในการคำนวณ"
     grouped["limitations_th"] = " | ".join(config.get("limitations_th", []))
     return grouped.sort_values("policy_score", ascending=False)
 
@@ -124,6 +127,21 @@ def _weighted_score(df: pd.DataFrame, weights: dict[str, float]) -> pd.Series:
         if column in df:
             score += pd.to_numeric(df[column], errors="coerce").fillna(0) * float(weight)
     return (score / total_weight * 100).round(2)
+
+
+def _weighted_score_available(df: pd.DataFrame, weights: dict[str, float]) -> tuple[pd.Series, pd.Series]:
+    """Calculate from available evidence without inventing values for missing indicators."""
+    weighted_score = pd.Series(0.0, index=df.index)
+    available_weight = pd.Series(0.0, index=df.index)
+    for column, weight in weights.items():
+        if column not in df:
+            continue
+        numeric = pd.to_numeric(df[column], errors="coerce")
+        present = numeric.notna()
+        weighted_score += numeric.fillna(0) * float(weight)
+        available_weight += present.astype(float) * float(weight)
+    score = weighted_score.div(available_weight.where(available_weight > 0)).mul(100).round(2)
+    return score, available_weight.round(2)
 
 
 def _normalize_series(series: pd.Series) -> pd.Series:

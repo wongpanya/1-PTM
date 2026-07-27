@@ -1,8 +1,10 @@
+import hashlib
+
 import pandas as pd
 import streamlit as st
 
 from src.governance.audit import append_audit_event
-from src.governance.privacy import aggregate_csv_bytes, suppress_small_groups
+from src.governance.privacy import aggregate_csv_bytes, append_export_log, suppress_small_groups
 from src.utils.config import PROJECT_ROOT, load_yaml
 from src.utils.ui import configure_page, render_database_status, render_header
 
@@ -65,17 +67,25 @@ if roles[role]["can_import"]:
         if missing:
             st.error(f"ยังขาดคอลัมน์บังคับ: {', '.join(missing)}")
         else:
-            append_audit_event("external_indicator_import_mockup", {"role": role, "rows": len(imported), "columns": list(imported.columns)})
-            st.success("ตรวจ schema ผ่านและบันทึก import log mockup แล้ว")
+            upload_fingerprint = hashlib.sha256(uploaded.getvalue()).hexdigest()
+            if st.session_state.get("external_indicator_import_fingerprint") != upload_fingerprint:
+                append_audit_event("external_indicator_import_mockup", {"role": role, "rows": len(imported), "columns": list(imported.columns)})
+                st.session_state["external_indicator_import_fingerprint"] = upload_fingerprint
+                st.success("ตรวจ schema ผ่านและบันทึก import log mockup แล้ว")
+            else:
+                st.info("ไฟล์นี้ผ่านการตรวจ schema แล้วใน session ปัจจุบัน")
 else:
     st.warning("Role นี้ไม่เห็นเมนูนำเข้าข้อมูล")
 
 if roles[role]["can_export_aggregate"]:
-    st.download_button(
+    export_name = "external_indicator_summary.csv"
+    export_data = aggregate_csv_bytes(indicator_summary, export_name, role, log_export=False)
+    if st.download_button(
         "Export Aggregate CSV",
-        data=aggregate_csv_bytes(indicator_summary, "external_indicator_summary.csv", role),
-        file_name="external_indicator_summary.csv",
+        data=export_data,
+        file_name=export_name,
         mime="text/csv",
-    )
+    ):
+        append_export_log(export_name, role, len(indicator_summary), list(indicator_summary.columns))
 else:
     st.caption("Role นี้ไม่มีสิทธิ์ export ข้อมูล")

@@ -9,6 +9,7 @@ from src.governance.audit import DEFAULT_AUDIT_LOG
 from src.governance.privacy import (
     FORBIDDEN_COLUMNS,
     aggregate_csv_bytes,
+    append_export_log,
     find_pii_in_text,
     mask_pii_dataframe,
     minimum_group_size,
@@ -97,12 +98,15 @@ else:
     st.warning("Role นี้ไม่มีสิทธิ์ดู audit/export log")
 
 if roles[role]["can_export_aggregate"]:
-    st.download_button(
+    export_name = "governance_masked_aggregate.csv"
+    export_data = aggregate_csv_bytes(masked_aggregate, export_name, role, log_export=False)
+    if st.download_button(
         "Export Masked Aggregate CSV",
-        data=aggregate_csv_bytes(masked_aggregate, "governance_masked_aggregate.csv", role),
-        file_name="governance_masked_aggregate.csv",
+        data=export_data,
+        file_name=export_name,
         mime="text/csv",
-    )
+    ):
+        append_export_log(export_name, role, len(masked_aggregate), list(masked_aggregate.columns))
 else:
     st.caption("Role นี้ไม่มีสิทธิ์ export ข้อมูล")
 

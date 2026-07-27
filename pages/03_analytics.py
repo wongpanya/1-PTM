@@ -9,8 +9,10 @@ from src.analytics.metrics import (
     metric_definitions,
     overview_metrics,
     rate_by_group,
+    remove_small_groups,
     top_counts,
 )
+from src.governance.privacy import minimum_group_size
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
@@ -42,6 +44,8 @@ filtered = apply_filters(df, cohorts, provinces, countries, field_groups)
 metrics = overview_metrics(filtered)
 income = income_summary(filtered)
 
+st.caption(f"ผลรายกลุ่มจะแสดงเฉพาะกลุ่มที่มีอย่างน้อย {minimum_group_size():,} ราย เพื่อคุ้มครองข้อมูล")
+
 cols = st.columns(5)
 cols[0].metric("Completion Rate", f"{metrics['completion_rate']:.2f}%")
 cols[1].metric("Dropout Rate", f"{metrics['scholarship_risk_rate']:.2f}%")
@@ -51,12 +55,12 @@ cols[4].metric("Income Records", f"{income['records_with_income']:,}")
 
 left, right = st.columns(2)
 with left:
-    cohort_completion = rate_by_group(filtered, "cohort", "target_graduation_success")
+    cohort_completion = remove_small_groups(rate_by_group(filtered, "cohort", "target_graduation_success"))
     st.subheader("Completion Rate ตามรุ่น")
     st.plotly_chart(px.bar(cohort_completion, x="cohort", y="rate", text_auto=True), width="stretch")
 
 with right:
-    cohort_employment = rate_by_group(filtered, "cohort", "target_employment_ready")
+    cohort_employment = remove_small_groups(rate_by_group(filtered, "cohort", "target_employment_ready"))
     st.subheader("Employment Rate ตามรุ่น")
     st.plotly_chart(px.bar(cohort_employment, x="cohort", y="rate", text_auto=True), width="stretch")
 
@@ -70,29 +74,29 @@ with left:
         st.info("ไม่มีข้อมูลรายได้ที่แปลงเป็นตัวเลขได้ในชุดที่กรอง")
 
 with right:
-    fit_counts = top_counts(filtered, "field_job_fit", 10)
+    fit_counts = remove_small_groups(top_counts(filtered, "field_job_fit", 10))
     st.subheader("Field-Job Fit")
     st.plotly_chart(px.bar(fit_counts, x="field_job_fit", y="count", text_auto=True), width="stretch")
 
 left, right = st.columns(2)
 with left:
-    local_fit_counts = top_counts(filtered, "local_fit", 10)
+    local_fit_counts = remove_small_groups(top_counts(filtered, "local_fit", 10))
     st.subheader("Local Development Fit")
     st.plotly_chart(px.bar(local_fit_counts, x="local_fit", y="count", text_auto=True), width="stretch")
 
 with right:
-    dropout_by_cohort = rate_by_group(filtered, "cohort", "target_scholarship_risk")
+    dropout_by_cohort = remove_small_groups(rate_by_group(filtered, "cohort", "target_scholarship_risk"))
     st.subheader("Dropout/Risk Rate ตามรุ่น")
     st.plotly_chart(px.bar(dropout_by_cohort, x="cohort", y="rate", text_auto=True), width="stretch")
 
 left, right = st.columns(2)
 with left:
-    country_outcomes = grouped_counts(filtered, ["current_country", "current_field_group"], 30)
+    country_outcomes = remove_small_groups(grouped_counts(filtered, ["current_country", "current_field_group"], 30))
     st.subheader("จำนวนตามประเทศและสาขา")
     st.dataframe(country_outcomes, width="stretch", hide_index=True)
 
 with right:
-    field_completion = rate_by_group(filtered, "current_field_group", "target_graduation_success").head(20)
+    field_completion = remove_small_groups(rate_by_group(filtered, "current_field_group", "target_graduation_success")).head(20)
     st.subheader("Completion Rate ตามกลุ่มสาขา")
     st.plotly_chart(px.bar(field_completion, x="current_field_group", y="rate", text_auto=True), width="stretch")
 

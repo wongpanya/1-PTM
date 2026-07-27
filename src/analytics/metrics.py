@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 
+from src.governance.privacy import minimum_group_size
 from src.utils.config import PROJECT_ROOT, load_yaml
 
 
@@ -124,6 +125,19 @@ def grouped_counts(df: pd.DataFrame, columns: list[str], limit: int = 20) -> pd.
         .head(limit)
     )
     return grouped
+
+
+def remove_small_groups(
+    df: pd.DataFrame,
+    count_column: str = "count",
+    min_size: int | None = None,
+) -> pd.DataFrame:
+    """Exclude small aggregate groups before they are shown in charts or tables."""
+    if count_column not in df:
+        return df.copy()
+    threshold = int(min_size if min_size is not None else minimum_group_size())
+    counts = pd.to_numeric(df[count_column], errors="coerce")
+    return df.loc[counts >= threshold].copy()
 
 
 def rate_by_group(df: pd.DataFrame, group_column: str, target_column: str) -> pd.DataFrame:

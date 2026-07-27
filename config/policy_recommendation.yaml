@@ -30,7 +30,7 @@ policy_recommendation:
       local_return_fit: 20
       external_inequality_need: 20
       workforce_demand: 20
-    formula: weighted_sum_with_external_indicator_placeholders
+    formula: weighted_sum_of_available_metrics_when_external_indicators_are_unavailable
     evidence_columns:
       - province
       - district

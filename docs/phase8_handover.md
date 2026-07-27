@@ -35,7 +35,7 @@ python scripts/privacy_check.py
 - This is a local SQLite and Streamlit Prototype, not a production database or multi-user service.
 - Role selection is a mockup; production authentication, authorization, and identity lifecycle are not implemented.
 - External indicators are template/sample data. The production version needs verified annual sources, owners, update schedules, and quality agreements.
-- Area recommendation fields for inequality need and workforce demand are placeholders until external indicators are supplied and mapped.
+- Area recommendation does not invent placeholder values for inequality need or workforce demand. Until verified indicators are supplied and mapped, the Area Ranking calculates only from available recipient-data evidence and clearly reports the excluded external weight.
 - Risk scores are rule-based prototypes. Rule weights and thresholds require formal expert approval before operational use.
 - Graduation forecasting does not enable machine learning. A validated train/test design, leakage review, calibration, and monitoring are still required.
 - Upload validation is a prototype schema check. It does not yet provide a production staging area, approval workflow, rollback, or asynchronous processing.

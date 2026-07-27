@@ -207,10 +207,6 @@ def check_deployment(results: list[dict]) -> None:
 
 def main() -> int:
     results: list[dict] = []
-    checks = [
-        ("repository", lambda: check_repository(results)),
-        ("pipeline", lambda: check_data_pipeline(results)),
-    ]
     try:
         check_repository(results)
         cleaned = check_data_pipeline(results)

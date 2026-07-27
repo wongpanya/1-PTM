@@ -87,13 +87,18 @@ area_columns = [
     "local_return_fit",
     "external_inequality_need",
     "workforce_demand",
+    "external_indicator_status",
+    "available_weight",
     "policy_score",
     "analysis_result",
     "formula",
     "weights",
 ]
 if not area_df.empty:
-    st.dataframe(area_df[area_columns], width="stretch", hide_index=True)
+    if "external_indicator_status" in area_df.columns and (area_df["external_indicator_status"] == "not_available_in_prototype").any():
+        st.warning("ยังไม่มีตัวชี้วัดภายนอกที่ตรวจสอบแล้วในระดับพื้นที่ จึงไม่นำค่านี้มาคำนวณคะแนน Area Ranking")
+    visible_area_columns = [column for column in area_columns if column in area_df.columns]
+    st.dataframe(area_df[visible_area_columns], width="stretch", hide_index=True)
 else:
     st.warning("ไม่มีพื้นที่ที่มีจำนวนข้อมูลถึงเกณฑ์ขั้นต่ำ")
 

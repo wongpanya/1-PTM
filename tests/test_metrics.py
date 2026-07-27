@@ -9,6 +9,7 @@ from src.analytics.metrics import (
     income_summary,
     overview_metrics,
     rate_by_group,
+    remove_small_groups,
     remove_forbidden_display_columns,
     safe_rate,
     top_counts,
@@ -95,6 +96,11 @@ class MetricsTest(unittest.TestCase):
         df = pd.DataFrame({"odos_uid": ["a"], "phone_number": ["x"], "contract_id": ["y"]})
         safe = remove_forbidden_display_columns(df)
         self.assertEqual(list(safe.columns), ["odos_uid"])
+
+    def test_remove_small_groups(self):
+        df = pd.DataFrame({"province": ["A", "B"], "count": [4, 5]})
+        safe = remove_small_groups(df, min_size=5)
+        self.assertEqual(safe.to_dict("records"), [{"province": "B", "count": 5}])
 
 
 if __name__ == "__main__":

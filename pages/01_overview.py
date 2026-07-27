@@ -7,8 +7,10 @@ from src.analytics.metrics import (
     load_analytics_dataset,
     metric_definitions,
     overview_metrics,
+    remove_small_groups,
     top_counts,
 )
+from src.governance.privacy import minimum_group_size
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
@@ -39,6 +41,8 @@ with st.sidebar:
 filtered = apply_filters(df, cohorts, provinces, countries, field_groups)
 metrics = overview_metrics(filtered)
 
+st.caption(f"ผลรายกลุ่มจะแสดงเฉพาะกลุ่มที่มีอย่างน้อย {minimum_group_size():,} ราย เพื่อคุ้มครองข้อมูล")
+
 cols = st.columns(5)
 cols[0].metric("ผู้รับทุนทั้งหมด", f"{metrics['total_recipients']:,}")
 cols[1].metric("สำเร็จการศึกษา", f"{metrics['completion_count']:,}")
@@ -50,27 +54,27 @@ st.caption("ตัวเลขทั้งหมดคำนวณจากช�
 
 left, right = st.columns(2)
 with left:
-    cohort_counts = top_counts(filtered, "cohort", 20)
+    cohort_counts = remove_small_groups(top_counts(filtered, "cohort", 20))
     st.subheader("จำนวนผู้รับทุนแต่ละรุ่น")
     st.plotly_chart(px.bar(cohort_counts, x="cohort", y="count", text_auto=True), width="stretch")
 
 with right:
-    province_counts = top_counts(filtered, "province", 20)
+    province_counts = remove_small_groups(top_counts(filtered, "province", 20))
     st.subheader("การกระจายรายจังหวัด")
     st.plotly_chart(px.bar(province_counts, x="province", y="count", text_auto=True), width="stretch")
 
 left, right = st.columns(2)
 with left:
-    district_counts = grouped_counts(filtered, ["province", "district"], 25)
+    district_counts = remove_small_groups(grouped_counts(filtered, ["province", "district"], 25))
     st.subheader("จังหวัดและอำเภอ")
     st.dataframe(district_counts, width="stretch", hide_index=True)
 
 with right:
-    country_counts = top_counts(filtered, "current_country", 20)
+    country_counts = remove_small_groups(top_counts(filtered, "current_country", 20))
     st.subheader("การกระจายตามประเทศ")
     st.plotly_chart(px.bar(country_counts, x="current_country", y="count", text_auto=True), width="stretch")
 
-field_country = grouped_counts(filtered, ["current_country", "current_field_group"], 30)
+field_country = remove_small_groups(grouped_counts(filtered, ["current_country", "current_field_group"], 30))
 st.subheader("ประเทศและกลุ่มสาขา")
 st.dataframe(field_country, width="stretch", hide_index=True)
 

@@ -104,14 +104,21 @@ def assert_aggregate_export(df: pd.DataFrame) -> None:
     assert_no_pii_text(df.to_csv(index=False))
 
 
-def aggregate_csv_bytes(df: pd.DataFrame, export_name: str, role: str = "Unknown") -> bytes:
+def aggregate_csv_bytes(
+    df: pd.DataFrame,
+    export_name: str,
+    role: str = "Unknown",
+    log_export: bool = True,
+) -> bytes:
+    """Build a safe aggregate export and optionally record a completed export."""
     if not role_can(role, "can_export_aggregate"):
         raise PermissionError(f"Role is not allowed to export aggregate data: {role}")
     assert_no_forbidden_columns(df.columns)
     safe = mask_pii_dataframe(df)
     assert_aggregate_export(safe)
     csv_text = safe.to_csv(index=False)
-    append_export_log(export_name, role, len(safe), list(safe.columns))
+    if log_export:
+        append_export_log(export_name, role, len(safe), list(safe.columns))
     return csv_text.encode("utf-8-sig")
 
 

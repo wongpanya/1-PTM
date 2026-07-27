@@ -44,7 +44,7 @@ Implemented controls:
 - PII-like pattern masking for phone, email, and 13-digit identifiers
 - Minimum group size suppression
 - Aggregate export validation
-- Export log
+- Export log recorded only after a user selects the export action
 - Audit log
 
 ## Role Behavior
@@ -56,6 +56,6 @@ Implemented controls:
 ## Acceptance Notes
 
 - Export data must be aggregate-only.
-- Small groups below the configured minimum group size are masked.
+- Small groups below the configured minimum group size are excluded from Overview and Analytics group results, and masked in the Governance export demonstration.
 - The app displays a prototype notice.
 - Audit and export events are written to local JSONL logs under `data/processed/`.

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -69,6 +70,12 @@ class PrivacyTest(unittest.TestCase):
         df = pd.DataFrame({"province": ["A"], "count": [10]})
         exported = aggregate_csv_bytes(df, "safe.csv", "Analyst")
         self.assertIn("province", exported.decode("utf-8-sig"))
+
+    @patch("src.governance.privacy.append_export_log")
+    def test_aggregate_csv_bytes_can_prepare_download_without_logging(self, mock_append):
+        df = pd.DataFrame({"province": ["A"], "count": [10]})
+        aggregate_csv_bytes(df, "prepared.csv", "Analyst", log_export=False)
+        mock_append.assert_not_called()
 
     def test_aggregate_csv_bytes_denies_viewer(self):
         df = pd.DataFrame({"province": ["A"], "count": [10]})
