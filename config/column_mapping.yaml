@@ -1,0 +1,52 @@
+schema_version: 0.1
+source: phase1_outputs/data/core_scholarship_dataset.csv
+primary_key: odos_uid
+tables:
+  students:
+    - odos_uid
+    - cohort
+    - round
+    - scholarship_type
+    - sex
+    - birth_year_be
+    - region
+    - province
+    - district
+    - economic_corridor
+  education:
+    - odos_uid
+    - initial_country
+    - initial_field_group
+    - initial_field
+    - project_condition_status
+    - overall_status
+    - current_status
+    - current_country
+    - current_field_group
+    - current_field
+    - latest_degree
+    - gpa_numeric
+    - study_duration_years
+  employment:
+    - odos_uid
+    - employment_type
+    - employment_detail
+    - workplace_province_country
+    - income_monthly_est
+    - domicile_employment_relation
+    - field_job_fit
+    - field_job_fit_level
+    - local_fit
+    - local_fit_level
+    - wants_government
+    - wants_government_flag
+privacy_excluded:
+  - contact_name
+  - contact_phone
+  - contract_no
+  - employment_cert_doc_no
+  - workplace_address
+  - employer
+  - job_title
+  - officer_notes
+  - other_comments

@@ -1,0 +1,44 @@
+schema_version: 0.1
+rules:
+  - id: CLN-001
+    name: keep_rows_with_id
+    description: Use only records with an ID.
+    reason: Rows without ID are not scholarship recipient records.
+  - id: CLN-002
+    name: pseudonymous_odos_uid
+    description: Use odos_uid instead of direct identifiers.
+    reason: Supports joins while reducing identity exposure.
+  - id: CLN-003
+    name: normalize_whitespace
+    description: Trim and collapse whitespace in text fields.
+    reason: Reduces category fragmentation from spacing differences.
+  - id: CLN-004
+    name: error_like_to_missing
+    description: Treat #NUM!, #VALUE!, #REF!, #DIV/0!, #N/A, and #NAME? as missing.
+    reason: These are spreadsheet errors, not valid analytical values.
+  - id: CLN-005
+    name: prefer_full_date_columns
+    description: Use full date columns instead of split year/month/day helper columns.
+    reason: Split helper columns contain many error-like values.
+  - id: CLN-006
+    name: parse_gpa_numeric
+    description: Convert GPA to numeric 0-4 where possible.
+    reason: Enables aggregate GPA metrics and model features.
+  - id: CLN-007
+    name: parse_income_monthly_estimate
+    description: Convert income ranges to midpoint estimates.
+    reason: Enables income analytics while preserving missingness.
+  - id: CLN-008
+    name: fit_level_mapping
+    description: Map fit values to levels 0-3.
+    reason: Enables risk scoring and comparison.
+  - id: CLN-009
+    name: government_preference_flag
+    description: Map government work preference to 1/0.
+    reason: Enables policy interest metrics.
+deferred_rules:
+  - full_geocoding
+  - full_occupation_taxonomy
+  - income_outlier_treatment
+  - missing_value_imputation
+  - advanced_ml_feature_engineering

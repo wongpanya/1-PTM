@@ -1,0 +1,25 @@
+schema_version: 0.1
+metrics:
+  total_recipients:
+    label_th: จำนวนผู้รับทุนทั้งหมด
+    formula: count_distinct(odos_uid)
+  completion_rate:
+    label_th: อัตราสำเร็จการศึกษา
+    numerator: project_condition_status == "สำเร็จการศึกษา"
+    denominator: all_records
+  scholarship_risk_rate:
+    label_th: อัตราความเสี่ยงตามสถานะทุน
+    numerator: target_scholarship_risk == 1
+    denominator: all_records
+  tracking_risk_rate:
+    label_th: อัตราความเสี่ยงด้านการติดตาม
+    numerator: target_tracking_risk == 1
+    denominator: all_records
+  income_availability_rate:
+    label_th: อัตราข้อมูลรายได้ที่ใช้ได้
+    numerator: income_monthly_est is not null
+    denominator: all_records
+  gpa_availability_rate:
+    label_th: อัตราข้อมูล GPA ที่ใช้ได้
+    numerator: gpa_numeric is not null
+    denominator: all_records

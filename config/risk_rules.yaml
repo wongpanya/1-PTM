@@ -1,0 +1,32 @@
+schema_version: 0.1
+risk_score:
+  max_score: 100
+  components:
+    scholarship_status:
+      weight: 35
+      positive_when: target_scholarship_risk == 1
+      explanation_th: สถานะโครงการอยู่ในกลุ่มเสี่ยง เช่น ลาออก พ้นสภาพ เกินระยะเวลา หรือสละสิทธิ์
+    tracking:
+      weight: 20
+      positive_when: target_tracking_risk == 1
+      explanation_th: ข้อมูลหลังสำเร็จอยู่ระหว่างติดตามหรือไม่พบในฐานข้อมูล
+    field_mismatch:
+      weight: 15
+      positive_when: target_field_mismatch == 1
+      explanation_th: งานไม่สอดคล้องหรือสอดคล้องน้อยกับสาขาที่ศึกษา
+    local_mismatch:
+      weight: 15
+      positive_when: target_local_mismatch == 1
+      explanation_th: งานไม่สอดคล้องหรือสอดคล้องน้อยกับท้องถิ่น
+    missing_income:
+      weight: 5
+      positive_when: income_monthly_est is null
+      explanation_th: ไม่มีข้อมูลรายได้สำหรับใช้วิเคราะห์ผลลัพธ์ทางเศรษฐกิจ
+    missing_gpa:
+      weight: 5
+      positive_when: gpa_numeric is null
+      explanation_th: ไม่มีข้อมูล GPA สำหรับใช้วิเคราะห์ผลสัมฤทธิ์การศึกษา
+    not_employment_ready:
+      weight: 5
+      positive_when: target_employment_ready == 0
+      explanation_th: ยังไม่พบสถานะประกอบอาชีพเชิงบวกในข้อมูลปัจจุบัน
