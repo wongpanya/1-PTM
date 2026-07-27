@@ -71,12 +71,25 @@ Phase 7 is accepted when:
 - Groups smaller than the minimum group size are suppressed.
 - Export is aggregate-only and privacy tests pass.
 
+Phase 8 is accepted when:
+
+- `python scripts/phase8_acceptance.py` passes all automated checks.
+- A no-PII sample can be imported, cleaned, validated, and traced from input rows to output rows.
+- KPI values are independently checked, filters reduce the dataset correctly, and risk scores remain explainable.
+- Recommendation scores recalculate when weights change.
+- Admin import, Analyst aggregate export, and Viewer export denial are enforced at the service layer.
+- No PII-like values appear in data artifacts, processing logs, or generated exports.
+- The repository has no password/secret assignment, has a usable `.env.example`, and Python files compile.
+- A new user can follow `README.md`, start the app, and run the Phase 8 acceptance command.
+- Known limitations and additional data requirements are documented in `docs/phase8_handover.md`.
+
 ## Required Commands
 
 ```bash
 python scripts/run_unit_tests.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
+python scripts/phase8_acceptance.py
 ```
 
 Task 3 workflow:

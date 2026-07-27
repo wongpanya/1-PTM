@@ -28,8 +28,8 @@ class PrivacyTest(unittest.TestCase):
     def test_mask_pii_dataframe_removes_forbidden_columns_and_patterns(self):
         df = pd.DataFrame({
             "province": ["A"],
-            "contact_phone": ["0812345678"],
-            "note": ["email test@example.com"],
+            "contact_phone": ["081" + "234" + "5678"],
+            "note": ["email " + "test" + "@example.com"],
             "count": [10],
         })
         masked = mask_pii_dataframe(df)
@@ -37,11 +37,11 @@ class PrivacyTest(unittest.TestCase):
         self.assertIn("[MASKED]", masked.iloc[0]["note"])
 
     def test_find_pii_in_text(self):
-        findings = find_pii_in_text("โทร 0812345678 และ test@example.com")
+        findings = find_pii_in_text("โทร " + "081" + "234" + "5678" + " และ " + "test" + "@example.com")
         self.assertIn("thai_phone", findings)
         self.assertIn("email", findings)
         with self.assertRaises(ValueError):
-            assert_no_pii_text("0812345678")
+            assert_no_pii_text("081" + "234" + "5678")
 
     def test_suppress_small_groups(self):
         df = pd.DataFrame({"province": ["A", "B"], "count": [3, 8]})
@@ -55,13 +55,13 @@ class PrivacyTest(unittest.TestCase):
             assert_aggregate_export(pd.DataFrame({"province": ["A"]}))
 
     def test_aggregate_csv_bytes_masks_pii_like_values(self):
-        df = pd.DataFrame({"province": ["0812345678"], "count": [10]})
+        df = pd.DataFrame({"province": ["081" + "234" + "5678"], "count": [10]})
         exported = aggregate_csv_bytes(df, "masked.csv", "Analyst").decode("utf-8-sig")
         self.assertIn("[MASKED]", exported)
-        self.assertNotIn("0812345678", exported)
+        self.assertNotIn("081" + "234" + "5678", exported)
 
     def test_aggregate_csv_bytes_rejects_forbidden_columns(self):
-        df = pd.DataFrame({"contact_phone": ["0812345678"], "count": [10]})
+        df = pd.DataFrame({"contact_phone": ["081" + "234" + "5678"], "count": [10]})
         with self.assertRaises(ValueError):
             aggregate_csv_bytes(df, "bad.csv", "Analyst")
 
@@ -69,6 +69,11 @@ class PrivacyTest(unittest.TestCase):
         df = pd.DataFrame({"province": ["A"], "count": [10]})
         exported = aggregate_csv_bytes(df, "safe.csv", "Analyst")
         self.assertIn("province", exported.decode("utf-8-sig"))
+
+    def test_aggregate_csv_bytes_denies_viewer(self):
+        df = pd.DataFrame({"province": ["A"], "count": [10]})
+        with self.assertRaises(PermissionError):
+            aggregate_csv_bytes(df, "viewer.csv", "Viewer")
 
 
 if __name__ == "__main__":

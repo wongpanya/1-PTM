@@ -95,6 +95,7 @@ Generated local outputs are written to `data/processed/` and are ignored by Git 
 - Phase 5: Overview, Data Quality, and Analytics dashboards implemented
 - Phase 6: Rule-based risk, graduation status, and traceable policy ranking implemented
 - Phase 7: External indicator template and governance controls implemented
+- Phase 8: Functional, data, privacy, deployment, and handover acceptance checks implemented
 
 ## Phase 4 Data Pipeline
 
@@ -135,6 +136,16 @@ External indicator and governance controls are configured through:
 - Notes: `docs/external_indicators_governance.md`
 
 The prototype includes role mockups, minimum group size suppression, PII masking, audit logs, export logs, and aggregate-only CSV export.
+
+## Phase 8 Acceptance and Handover
+
+Run the complete Prototype acceptance suite:
+
+```bash
+python scripts/phase8_acceptance.py
+```
+
+The suite checks upload/import, pipeline reproducibility, data validation, KPI calculations, filters, risk explanations, policy weight recalculation, aggregate export permissions, privacy artifacts, secrets, syntax, and runtime dependencies. The executive trial scenario, known limitations, and additional data requirements are in `docs/phase8_handover.md`.
 
 ## Database Schema
 

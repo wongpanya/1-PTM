@@ -77,6 +77,12 @@ def minimum_group_size() -> int:
     return int(load_yaml("config/governance.yaml").get("minimum_group_size", 5))
 
 
+def role_can(role: str, capability: str) -> bool:
+    """Return whether a configured mock role has a governance capability."""
+    roles = load_yaml("config/governance.yaml").get("roles", {})
+    return bool(roles.get(role, {}).get(capability, False))
+
+
 def suppress_small_groups(df: pd.DataFrame, count_column: str = "count", min_size: int | None = None) -> pd.DataFrame:
     min_size = int(min_size if min_size is not None else minimum_group_size())
     if count_column not in df:
@@ -99,6 +105,8 @@ def assert_aggregate_export(df: pd.DataFrame) -> None:
 
 
 def aggregate_csv_bytes(df: pd.DataFrame, export_name: str, role: str = "Unknown") -> bytes:
+    if not role_can(role, "can_export_aggregate"):
+        raise PermissionError(f"Role is not allowed to export aggregate data: {role}")
     assert_no_forbidden_columns(df.columns)
     safe = mask_pii_dataframe(df)
     assert_aggregate_export(safe)

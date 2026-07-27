@@ -37,4 +37,4 @@ st.markdown(
 """
 )
 
-st.warning("Phase 3 ยังเป็นโครงระบบและฐานข้อมูลกลาง ยังไม่เปิด analytics, risk model หรือ recommendation เชิงลึก")
+st.warning("Prototype นี้ใช้เพื่อสาธิตการวิเคราะห์เชิงนโยบาย ผล Risk และ Recommendation ต้องให้ผู้เชี่ยวชาญตรวจสอบก่อนนำไปใช้จริง")
