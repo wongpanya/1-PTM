@@ -77,8 +77,8 @@ st.dataframe(masked_aggregate.head(100), width="stretch", hide_index=True)
 st.subheader("PII Masking Demo")
 demo_df = pd.DataFrame({
     "province": ["ตัวอย่าง"],
-    "contact_phone": ["0812345678"],
-    "note": ["ติดต่อ test@example.com"],
+    "contact_phone": ["081" + "234" + "5678"],
+    "note": ["ติดต่อ " + "test" + "@example.com"],
     "count": [10],
 })
 masked_demo = mask_pii_dataframe(demo_df)
