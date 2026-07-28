@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
@@ -36,7 +37,7 @@ def initialize_database(
 
     schema = load_yaml(SCHEMA_PATH)
     sample = _load_sample(sample_path)
-    with sqlite3.connect(db) as conn:
+    with closing(sqlite3.connect(db)) as conn, conn:
         for table_name, definition in schema["tables"].items():
             _create_table(conn, table_name, definition)
         _seed_core_tables(conn, sample)
@@ -58,12 +59,31 @@ def ensure_database(db_path: str | Path | None = None) -> Path:
     db = resolve_db_path(db_path)
     if not db.exists():
         initialize_database(db)
+    else:
+        ensure_schema_tables(db)
+    return db
+
+
+def ensure_schema_tables(db_path: str | Path | None = None) -> Path:
+    db = resolve_db_path(db_path)
+    schema = load_yaml(SCHEMA_PATH)
+    with closing(sqlite3.connect(db)) as conn, conn:
+        for table_name, definition in schema["tables"].items():
+            columns = definition["columns"]
+            primary_key = definition.get("primary_key")
+            column_defs = []
+            for name, column_type in columns.items():
+                suffix = " PRIMARY KEY" if name == primary_key else ""
+                column_defs.append(f'"{name}" {column_type}{suffix}')
+            conn.execute(
+                f'CREATE TABLE IF NOT EXISTS "{table_name}" ({", ".join(column_defs)})'
+            )
     return db
 
 
 def table_counts(db_path: str | Path = DEFAULT_DB_PATH) -> dict[str, int]:
-    db = resolve_db_path(db_path)
-    with sqlite3.connect(db) as conn:
+    db = ensure_database(db_path)
+    with closing(sqlite3.connect(db)) as conn, conn:
         tables = [row[0] for row in conn.execute("select name from sqlite_master where type='table' order by name")]
         return {table: int(conn.execute(f'select count(*) from "{table}"').fetchone()[0]) for table in tables}
 

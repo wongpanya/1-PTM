@@ -50,6 +50,7 @@ python scripts/import_data.py
 python scripts/build_database.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
+python scripts/validate_labels.py
 ```
 
 If `pytest` is installed, you may also run:
@@ -117,6 +118,12 @@ streamlit run app.py
 
 The first three pages now use aggregate no-PII data for Overview, Data Quality, and Analytics. KPI definitions and formulas are documented in `config/metrics.yaml`; implementation notes are in `docs/dashboard_analytics.md`.
 
+Overview and Analytics share filters for analysis year, cohort, region, province,
+district, country, field group, detailed field, standardized university, and
+employer-sector code. They also provide role-controlled aggregate CSV exports.
+Dropout, termination, scholarship risk, average/median income, Field-Job Fit,
+and Local Fit are displayed as separate traceable KPIs.
+
 ## Phase 6 Risk and Policy
 
 Risk scoring and policy recommendations are explainable prototype rules:
@@ -126,6 +133,19 @@ Risk scoring and policy recommendations are explainable prototype rules:
 - Notes and limitations: `docs/risk_forecast_policy.md`
 
 Weights can be adjusted in the Policy Recommendation page and the ranking recalculates from data-backed formulas.
+
+### Agents and Label Governance
+
+ระบบมี Agent แบบ Human-in-the-loop 7 บทบาท ได้แก่ Data Steward, Analytics, Risk, Policy, External Indicator, Governance และ Technical โดย Agent ช่วยเตรียมและตรวจ Label แต่ไม่สามารถอนุมัติ Label ของตนเอง
+
+- Agent registry: `config/agents.yaml`
+- Label definitions and leakage rules: `config/labeling.yaml`
+- Human review template: `data/reference/label_review_template.csv`
+- Staffing and workflow: `docs/agents_and_labeling.md`
+
+ระบบยังไม่ฝึก ML จนกว่า Label จะผ่าน Human Approval และการตรวจ data leakage
+
+Project owner ยืนยัน Label ทั้ง 8 รายการสำหรับ Prototype experiment เมื่อวันที่ 2026-07-28 แล้ว แต่ยังไม่ใช่ Production approval รายละเอียดอยู่ใน `data/reference/label_approval_register.csv`
 
 ## Phase 7 External Indicators and Governance
 

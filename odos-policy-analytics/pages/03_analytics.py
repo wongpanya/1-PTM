@@ -3,6 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.analytics.exporting import build_dashboard_export
 from src.analytics.metrics import (
     apply_filters,
     data_quality_summary,
@@ -29,11 +30,23 @@ from src.analytics.visualization import (
     recommendation_for,
     visualization_config,
 )
-from src.governance.privacy import minimum_group_size
+from src.governance.privacy import (
+    aggregate_csv_bytes,
+    append_export_log,
+    minimum_group_size,
+    role_can,
+)
+from src.utils.appearance_v1 import render_appearance
+from src.utils.chart_surfaces_v2 import render_chart
+from src.utils.metric_surfaces_v2 import render_metric_surface_styles
+from src.utils.metrics_ui import render_metric_grid
+from src.utils.selection_pipeline_v1 import render_selection_pipeline
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
 configure_page("Analytics")
+render_metric_surface_styles()
+render_appearance()
 render_header(
     "Analytics",
     "เลือกโหมดและคำถามที่ต้องการตอบ แล้วระบบจะแนะนำ Visualization ที่เหมาะกับข้อมูล",
@@ -53,16 +66,52 @@ quality = data_quality_summary(df, issues_df, definitions)
 
 with st.sidebar:
     st.subheader("ตัวกรอง")
+    year_options = sorted(df["analysis_year"].dropna().astype(int).unique().tolist()) if "analysis_year" in df else []
     cohort_options = sorted(df["cohort"].dropna().unique().tolist()) if "cohort" in df else []
     country_options = sorted(df["current_country"].dropna().unique().tolist()) if "current_country" in df else []
     field_options = sorted(df["current_field_group"].dropna().unique().tolist()) if "current_field_group" in df else []
     province_options = sorted(df["province"].dropna().unique().tolist()) if "province" in df else []
+    district_options = sorted(df["district"].dropna().unique().tolist()) if "district" in df else []
+    region_options = sorted(df["region"].dropna().unique().tolist()) if "region" in df else []
+    detailed_field_options = sorted(df["current_field"].dropna().unique().tolist()) if "current_field" in df else []
+    university_options = (
+        sorted(df["standardized_university_name"].dropna().unique().tolist())
+        if "standardized_university_name" in df
+        else []
+    )
+    employer_sector_options = (
+        sorted(df["employer_sector_code"].dropna().unique().tolist())
+        if "employer_sector_code" in df
+        else []
+    )
+    analysis_years = st.multiselect("ปีวิเคราะห์", year_options)
     cohorts = st.multiselect("รุ่น", cohort_options)
     countries = st.multiselect("ประเทศ", country_options)
     field_groups = st.multiselect("กลุ่มสาขา", field_options)
     provinces = st.multiselect("จังหวัด", province_options)
+    districts = st.multiselect("อำเภอ", district_options)
+    regions = st.multiselect("ภูมิภาค", region_options)
+    detailed_fields = st.multiselect("สาขารายละเอียด", detailed_field_options)
+    universities = st.multiselect("มหาวิทยาลัยมาตรฐาน", university_options)
+    employer_sectors = st.multiselect("รหัสภาคส่วนผู้จ้าง", employer_sector_options)
+    st.divider()
+    export_role = st.selectbox("สิทธิ์สำหรับ Export", ["Analyst", "Admin", "Viewer"], index=0)
 
-filtered = apply_filters(df, cohorts, provinces, countries, field_groups)
+filtered = apply_filters(
+    df,
+    cohorts=cohorts,
+    provinces=provinces,
+    countries=countries,
+    field_groups=field_groups,
+    analysis_years=analysis_years,
+    districts=districts,
+    regions=regions,
+    fields=detailed_fields,
+    universities=universities,
+    employer_sectors=employer_sectors,
+)
+if filtered.empty:
+    st.warning("ไม่พบข้อมูลตามชุดตัวกรองนี้ กรุณาลดเงื่อนไขหรือเลือกตัวกรองใหม่")
 metrics = overview_metrics(filtered)
 income = income_summary(filtered)
 
@@ -74,17 +123,84 @@ mode = st.radio(
 )
 st.caption(
     f"กำลังวิเคราะห์ {len(filtered):,} ระเบียน และแสดงผลรายกลุ่มเมื่อมีอย่างน้อย "
-    f"{minimum_group_size():,} ราย"
+    f"{minimum_group_size():,} ราย | ปีวิเคราะห์ = ปีเริ่มศึกษา "
+    "โดยใช้ปีคาดว่าจะสำเร็จและปีเริ่มงานเป็น fallback"
 )
 
 
 def _kpi_strip():
-    columns = st.columns(5)
-    columns[0].metric("Completion Rate", f"{metrics['completion_rate']:.2f}%")
-    columns[1].metric("Dropout/Risk Rate", f"{metrics['scholarship_risk_rate']:.2f}%")
-    columns[2].metric("Employment Rate", f"{metrics['employment_rate']:.2f}%")
-    columns[3].metric("Median Income", f"{income['median_income']:,.0f}")
-    columns[4].metric("Income Records", f"{income['records_with_income']:,}")
+    st.markdown("#### :material/school: ผลลัพธ์การศึกษาและความเสี่ยง")
+    st.caption("อ่านผลลัพธ์หลักและสัญญาณที่ควรติดตามก่อนลงรายละเอียดในกราฟ")
+    render_metric_grid(
+        [
+            {
+                "label": "สำเร็จการศึกษา",
+                "value": f"{metrics['completion_rate']:.2f}%",
+            },
+            {
+                "label": "ออกจากทุนกลางคัน",
+                "value": f"{metrics['dropout_rate']:.2f}%",
+                "delta": f"{metrics['dropout_count']:,} จาก {len(filtered):,} ราย",
+            },
+            {
+                "label": "ยุติทุน",
+                "value": f"{metrics['termination_rate']:.2f}%",
+                "delta": f"{metrics['termination_count']:,} จาก {len(filtered):,} ราย",
+            },
+            {
+                "label": "ความเสี่ยงทุน",
+                "value": f"{metrics['scholarship_risk_rate']:.2f}%",
+                "delta": f"{metrics['scholarship_risk_count']:,} จาก {len(filtered):,} ราย",
+            },
+        ]
+    )
+
+    st.markdown("#### :material/work: การมีงานทำและรายได้")
+    render_metric_grid(
+        [
+            {
+                "label": "มีงานทำ",
+                "value": f"{metrics['employment_rate']:.2f}%",
+            },
+            {
+                "label": "รายได้เฉลี่ย",
+                "value": f"{income['average_income']:,.0f}",
+                "delta": "บาทต่อเดือน",
+            },
+            {
+                "label": "รายได้มัธยฐาน",
+                "value": f"{income['median_income']:,.0f}",
+                "delta": "บาทต่อเดือน",
+            },
+            {
+                "label": "ข้อมูลรายได้",
+                "value": f"{income['records_with_income']:,}",
+                "delta": "ระเบียนพร้อมวิเคราะห์",
+            },
+        ]
+    )
+
+    st.markdown("#### :material/hub: ความสอดคล้องของงาน")
+    render_metric_grid(
+        [
+            {
+                "label": "งานตรงสาขา",
+                "value": f"{metrics['field_job_fit_rate']:.2f}%",
+                "delta": (
+                    f"{metrics['field_job_fit_count']:,} จาก "
+                    f"{metrics['field_job_fit_denominator']:,} ราย"
+                ),
+            },
+            {
+                "label": "งานสอดคล้องท้องถิ่น",
+                "value": f"{metrics['local_fit_rate']:.2f}%",
+                "delta": (
+                    f"{metrics['local_fit_count']:,} จาก "
+                    f"{metrics['local_fit_denominator']:,} ราย"
+                ),
+            },
+        ]
+    )
 
 
 def _render_guidance(question_key: str, category_count: int | None = None):
@@ -108,9 +224,14 @@ def _render_guidance(question_key: str, category_count: int | None = None):
 
 def _dimension_options(include_cohort=True):
     options = {
+        "ปีวิเคราะห์": "analysis_year",
         "จังหวัด": "province",
+        "อำเภอ": "district",
         "ประเทศ": "current_country",
         "กลุ่มสาขา": "current_field_group",
+        "สาขารายละเอียด": "current_field",
+        "มหาวิทยาลัย": "standardized_university_name",
+        "ภาคส่วนผู้จ้าง": "employer_sector_code",
         "ภูมิภาค": "region",
     }
     if include_cohort:
@@ -133,7 +254,9 @@ def _target_options():
     return {
         "Completion Rate": "target_graduation_success",
         "Employment Rate": "target_employment_ready",
-        "Dropout/Risk Rate": "target_scholarship_risk",
+        "Dropout Rate": "target_dropout",
+        "Termination Rate": "target_termination",
+        "Scholarship Risk Rate": "target_scholarship_risk",
         "Tracking Gap Rate": "target_tracking_risk",
     }
 
@@ -144,7 +267,7 @@ def _dot_plot(dimension_label: str, dimension: str):
     if counts.empty:
         st.info("ไม่มีกลุ่มที่ผ่านเกณฑ์การปกปิด")
         return
-    st.plotly_chart(
+    render_chart(
         px.scatter(
             counts,
             x="count",
@@ -161,6 +284,8 @@ def _line_chart(group_label: str, group_column: str, target_label: str, target_c
     rate_column = {
         "target_graduation_success": "completion_rate",
         "target_employment_ready": "employment_rate",
+        "target_dropout": "dropout_rate",
+        "target_termination": "termination_rate",
         "target_scholarship_risk": "scholarship_risk_rate",
         "target_tracking_risk": "tracking_gap_rate",
     }[target_column]
@@ -168,7 +293,7 @@ def _line_chart(group_label: str, group_column: str, target_label: str, target_c
     if outcomes.empty:
         st.info("ไม่มีกลุ่มที่ผ่านเกณฑ์การปกปิด")
         return
-    st.plotly_chart(
+    render_chart(
         px.line(
             outcomes.sort_values(group_column),
             x=group_column,
@@ -200,7 +325,7 @@ def _box_plot(group_label: str, group_column: str):
             )
         )
     figure.update_layout(yaxis_title="รายได้ประมาณการต่อเดือน", showlegend=False)
-    st.plotly_chart(figure, width="stretch")
+    render_chart(figure, width="stretch")
 
 
 def _bubble_plot(group_label: str, group_column: str):
@@ -209,7 +334,7 @@ def _bubble_plot(group_label: str, group_column: str):
     if outcomes.empty:
         st.info("ไม่มีกลุ่มที่ผ่านเกณฑ์การปกปิด")
         return
-    st.plotly_chart(
+    render_chart(
         px.scatter(
             outcomes,
             x="completion_rate",
@@ -247,7 +372,7 @@ def _sankey(source_label: str, source_column: str, target_label: str, target_col
             },
         )
     )
-    st.plotly_chart(figure, width="stretch")
+    render_chart(figure, width="stretch")
 
 
 def _missingness_heatmap(group_label: str, group_column: str):
@@ -264,7 +389,7 @@ def _missingness_heatmap(group_label: str, group_column: str):
         st.info("ไม่มีกลุ่มที่ผ่านเกณฑ์การปกปิด")
         return
     matrix = matrix_rows.set_index(group_column)[fields]
-    st.plotly_chart(
+    render_chart(
         px.imshow(
             matrix,
             text_auto=".0f",
@@ -314,12 +439,66 @@ def _dumbbell(group_label: str, group_column: str):
         )
     )
     figure.update_layout(xaxis_title="อัตรา (%)", yaxis_title=group_label)
-    st.plotly_chart(figure, width="stretch")
+    render_chart(figure, width="stretch")
 
 
 def _guided_view():
     options = question_options(visual_config)
-    selected_label = st.selectbox("คำถามที่ต้องการวิเคราะห์", list(options))
+    question_details = {
+        "ranking": (
+            ":material/leaderboard:",
+            "เปรียบเทียบจำนวนและค้นหากลุ่มที่มีค่าสูงหรือต่ำ",
+        ),
+        "proportion": (
+            ":material/donut_large:",
+            "ดูองค์ประกอบและสัดส่วนของแต่ละกลุ่ม",
+        ),
+        "trend": (
+            ":material/show_chart:",
+            "ติดตามการเปลี่ยนแปลงของผลลัพธ์ตามช่วงเวลา",
+        ),
+        "distribution": (
+            ":material/bar_chart:",
+            "ตรวจการกระจาย ค่ากลาง และช่วงของข้อมูล",
+        ),
+        "relationship": (
+            ":material/bubble_chart:",
+            "สำรวจความสัมพันธ์ระหว่างผลลัพธ์หลายตัว",
+        ),
+        "pathway": (
+            ":material/account_tree:",
+            "ดูเส้นทางจากสถานะเริ่มต้นไปยังผลลัพธ์",
+        ),
+        "geography": (
+            ":material/map:",
+            "เปรียบเทียบผลลัพธ์ตามจังหวัดหรือพื้นที่",
+        ),
+        "missingness": (
+            ":material/data_alert:",
+            "ค้นหากลุ่มและฟิลด์ที่ยังติดตามข้อมูลไม่ครบ",
+        ),
+        "multi_kpi": (
+            ":material/compare_arrows:",
+            "เปรียบเทียบหลายตัวชี้วัดในมุมมองเดียว",
+        ),
+    }
+    selected_label = render_selection_pipeline(
+        "คำถามที่ต้องการวิเคราะห์",
+        [
+            {
+                "id": key,
+                "value": label,
+                "title": label,
+                "description": question_details[key][1],
+                "meta": "ระบบเลือกกราฟที่เหมาะสมให้อัตโนมัติ",
+                "icon": question_details[key][0],
+            }
+            for label, key in options.items()
+        ],
+        state_key="analytics_question_pipeline_v1",
+        default=next(iter(options)),
+        columns=3,
+    )
     question_key = options[selected_label]
 
     if question_key == "ranking":
@@ -336,13 +515,15 @@ def _guided_view():
         group_label = right.selectbox("เปรียบเทียบตาม", list(dimensions), key="guided_prop_group")
         category_column = categories[category_label]
         group_column = dimensions[group_label]
+        if category_column == group_column:
+            st.info("หมวดหมู่และมิติเปรียบเทียบเป็นข้อมูลเดียวกัน จึงคำนวณเป็นสัดส่วนรวมโดยไม่แบ่งกลุ่มซ้ำ")
         category_count = int(filtered[category_column].dropna().nunique()) if category_column in filtered else 0
         _render_guidance(question_key, category_count)
         proportions = aggregate_proportions(filtered, category_column, group_column)
         if proportions.empty:
             st.info("ไม่มีกลุ่มที่ผ่านเกณฑ์การปกปิด")
         else:
-            st.plotly_chart(
+            render_chart(
                 px.bar(
                     proportions,
                     x=group_column,
@@ -425,23 +606,25 @@ def _custom_view():
         _render_guidance(question_key)
         counts = remove_small_groups(top_counts(filtered, group_column, 30))
         if not counts.empty:
-            st.plotly_chart(px.treemap(counts, path=[group_column], values="count"), width="stretch")
+            render_chart(px.treemap(counts, path=[group_column], values="count"), width="stretch")
     elif chart in {"100% Stacked Bar", "Donut Chart"}:
         categories = _category_options()
         category_label = st.selectbox("หมวดหมู่", list(categories), key="custom_category")
         category_column = categories[category_label]
+        if category_column == group_column:
+            st.info("หมวดหมู่และมิติหลักเป็นข้อมูลเดียวกัน จึงคำนวณเป็นสัดส่วนรวมโดยไม่แบ่งกลุ่มซ้ำ")
         category_count = int(filtered[category_column].dropna().nunique()) if category_column in filtered else 0
         recommendation = _render_guidance(question_key, category_count)
         proportions = aggregate_proportions(filtered, category_column, None if chart == "Donut Chart" else group_column)
         if proportions.empty:
             st.info("ไม่มีกลุ่มที่ผ่านเกณฑ์การปกปิด")
         elif chart == "Donut Chart" and category_count <= 5:
-            st.plotly_chart(px.pie(proportions, names=category_column, values="count", hole=0.45), width="stretch")
+            render_chart(px.pie(proportions, names=category_column, values="count", hole=0.45), width="stretch")
         else:
             if chart == "Donut Chart":
                 st.warning(f"ระบบเปลี่ยนเป็น {recommendation['recommended_chart']} เนื่องจากมีหมวดหมู่มากเกินไป")
                 proportions = aggregate_proportions(filtered, category_column, group_column)
-            st.plotly_chart(
+            render_chart(
                 px.bar(proportions, x=group_column, y="percent", color=category_column),
                 width="stretch",
             )
@@ -462,7 +645,7 @@ def _custom_view():
         if histogram.empty:
             st.info("ข้อมูลรายได้ไม่เพียงพอ")
         else:
-            st.plotly_chart(px.bar(histogram, x="bin", y="count", labels={"bin": "ช่วงรายได้", "count": "จำนวน"}), width="stretch")
+            render_chart(px.bar(histogram, x="bin", y="count", labels={"bin": "ช่วงรายได้", "count": "จำนวน"}), width="stretch")
     elif chart == "Heatmap":
         _render_guidance(question_key)
         _missingness_heatmap(group_label, group_column)
@@ -474,7 +657,7 @@ def _custom_view():
     elif chart == "Funnel Chart":
         _render_guidance(question_key)
         funnel = funnel_summary(filtered)
-        st.plotly_chart(px.funnel(funnel, x="count", y="stage", hover_data=["rate_from_total"]), width="stretch")
+        render_chart(px.funnel(funnel, x="count", y="stage", hover_data=["rate_from_total"]), width="stretch")
     elif chart == "Dumbbell Plot":
         _render_guidance(question_key)
         _dumbbell(group_label, group_column)
@@ -509,14 +692,14 @@ def _executive_view():
             )
         )
         figure.update_layout(height=170, margin={"l": 20, "r": 20, "t": 50, "b": 20})
-        column.plotly_chart(figure, width="stretch")
+        render_chart(figure, container=column, width="stretch")
     st.caption("เกณฑ์ 80% เป็นค่าอ้างอิงสำหรับสาธิต Visualization เท่านั้น ยังไม่ใช่เป้าหมายนโยบายที่รับรองแล้ว")
 
     left, right = st.columns([1, 1])
     with left:
         st.subheader("เส้นทางผลลัพธ์รวม")
         funnel = funnel_summary(filtered)
-        st.plotly_chart(px.funnel(funnel, x="count", y="stage", hover_data=["rate_from_total"]), width="stretch")
+        render_chart(px.funnel(funnel, x="count", y="stage", hover_data=["rate_from_total"]), width="stretch")
     with right:
         _dumbbell("รุ่น", "cohort")
 
@@ -553,11 +736,30 @@ with st.expander("นิยาม KPI ที่ใช้ในหน้านี
     for key in [
         "completion_rate",
         "dropout_rate",
+        "termination_rate",
+        "scholarship_risk_rate",
         "employment_rate",
         "income_distribution",
+        "average_income",
+        "median_income",
         "field_job_fit_rate",
         "local_development_fit_rate",
     ]:
         item = definitions["metrics"][key]
         rows.append({"kpi": item["label_th"], "formula": item["formula"], "definition": item["definition_th"]})
     st.dataframe(rows, width="stretch", hide_index=True)
+
+st.subheader("Export รายงาน Aggregate ตาม Filter")
+export_name = "analytics_filtered_aggregate.csv"
+export_report = build_dashboard_export(filtered, "Analytics")
+if role_can(export_role, "can_export_aggregate"):
+    export_data = aggregate_csv_bytes(export_report, export_name, export_role, log_export=False)
+    if st.download_button(
+        "Export Analytics Aggregate CSV",
+        data=export_data,
+        file_name=export_name,
+        mime="text/csv",
+    ):
+        append_export_log(export_name, export_role, len(export_report), list(export_report.columns))
+else:
+    st.caption("Viewer ไม่มีสิทธิ์ Export ข้อมูล")

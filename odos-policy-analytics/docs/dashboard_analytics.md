@@ -12,13 +12,27 @@ No raw Excel file is read during dashboard runtime.
 
 ### Overview
 
+- Shared filters for analysis year, cohort, region, province, district, country, field group, detailed field, standardized university, and employer-sector code
 - Population views by cohort, sex, region, province, and district
-- Education views by scholarship condition status, country, and field group
-- Post-scholarship views for employment, aggregate income, field-job fit, and local-development fit
+- Education views by scholarship condition status, country, field group, and normalized current university
+- Post-scholarship views for employment type, employer-sector code, aggregate income, field-job fit, and local-development fit
 - Area comparison for recipient volume, completion, and employment outcomes
 - Outcome trends by cohort
 - Follow-up data gaps by cohort, province, country, and field group
-- Explicit limitation when a requested dimension, such as standardized university, is not available
+- Aggregate CSV export reflects the active filters and is limited by the role mockup
+
+`analysis_year` is the study-start year. The graduation-expected year and work-start year are used as fallbacks, in that order, when the study-start date is missing.
+
+`standardized_university_name` applies whitespace normalization and approved alias mappings. It is not yet an official university registry code.
+
+`employer_sector_code` is derived from employment type and does not expose employer names:
+
+- `GOV`
+- `PRIVATE`
+- `SOE`
+- `SELF`
+- `NPO`
+- `OTHER`
 
 ### Data Quality
 
@@ -33,8 +47,10 @@ No raw Excel file is read during dashboard runtime.
 ### Analytics
 
 - Completion Rate
-- Dropout or scholarship-risk Rate
+- Dropout Rate, Termination Rate, and Scholarship Risk Rate as separate KPIs
 - Employment Rate
+- Average and median valid monthly income with the number of records used
+- Field-Job Fit and Local Fit rates with numerator and denominator
 - Four selectable modes:
   - `Executive View` for KPI bullet charts, an aggregate funnel, and cohort outcome gaps
   - `Guided Visualization` for choosing the policy question before the chart
@@ -48,6 +64,7 @@ No raw Excel file is read during dashboard runtime.
 - Local Development Fit
 - Outcome comparison by cohort
 - Comparison by country and field group
+- Aggregate CSV export reflects the active filters and records the completed export event
 
 ## Metric Traceability
 
@@ -70,4 +87,7 @@ Visualization recommendations and compatibility rules are defined in
 - ML targets remain rule-based prototype targets until domain experts certify the definitions.
 - Dropout Rate uses the Phase 4 scholarship-risk target as a proxy until official dropout status definitions are formally confirmed.
 - Income charts use converted monthly income estimates and exclude missing or non-convertible values.
+- Income KPIs and distributions exclude values outside the configured validation range of 0-500,000 baht per month.
+- University standardization is text-based; Production still needs official institution reference codes.
+- Employer-sector codes describe sectors only and never expose employer or agency names.
 - Results should support policy discussion, not automated scholarship allocation.

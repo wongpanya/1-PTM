@@ -16,7 +16,9 @@ from src.governance.privacy import (
     suppress_small_groups,
 )
 from src.ingestion.data_access import scalar
+from src.utils.appearance_v1 import render_appearance
 from src.utils.config import PROJECT_ROOT, load_yaml
+from src.utils.metric_surfaces_v2 import render_metric_surface_styles
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
@@ -38,6 +40,8 @@ def _read_jsonl(path: str | Path) -> list[dict]:
 
 
 configure_page("Governance")
+render_metric_surface_styles()
+render_appearance()
 render_header("Governance", "ธรรมาภิบาลข้อมูล Privacy Controls และ Audit Trail สำหรับ Prototype")
 
 governance = load_yaml("config/governance.yaml")

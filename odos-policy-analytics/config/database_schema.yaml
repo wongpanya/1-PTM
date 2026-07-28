@@ -30,11 +30,14 @@ tables:
       latest_degree: TEXT
       gpa_numeric: REAL
       study_duration_years: REAL
+      analysis_year: INTEGER
+      standardized_university_name: TEXT
   employment_records:
     primary_key: odos_uid
     columns:
       odos_uid: TEXT
       employment_type: TEXT
+      employer_sector_code: TEXT
       employment_detail: TEXT
       workplace_province_country: TEXT
       income_monthly_est: REAL
@@ -59,6 +62,8 @@ tables:
       target_employment_ready: INTEGER
       target_field_mismatch: INTEGER
       target_local_mismatch: INTEGER
+      target_dropout: INTEGER
+      target_termination: INTEGER
   geography_reference:
     primary_key: geography_key
     columns:
@@ -123,3 +128,53 @@ tables:
       event_time: TEXT
       actor: TEXT
       detail: TEXT
+  model_registry:
+    primary_key: model_version
+    columns:
+      model_version: TEXT
+      target: TEXT
+      model_key: TEXT
+      status: TEXT
+      threshold: REAL
+      metrics_json: TEXT
+      approved_by_role: TEXT
+      registered_at: TEXT
+  prediction_cases:
+    primary_key: case_id
+    columns:
+      case_id: TEXT
+      case_reference: TEXT
+      target: TEXT
+      purpose_code: TEXT
+      model_key: TEXT
+      model_version: TEXT
+      probability: REAL
+      threshold: REAL
+      tendency_band: TEXT
+      interpretation: TEXT
+      data_quality_score: REAL
+      data_warnings_json: TEXT
+      features_json: TEXT
+      status: TEXT
+      created_by: TEXT
+      created_role: TEXT
+      created_at: TEXT
+      reviewed_by: TEXT
+      reviewed_at: TEXT
+      review_decision: TEXT
+      review_reason: TEXT
+      approved_by: TEXT
+      approved_at: TEXT
+      approval_decision: TEXT
+      action_plan: TEXT
+  prediction_reviews:
+    primary_key: review_id
+    columns:
+      review_id: TEXT
+      case_id: TEXT
+      stage: TEXT
+      decision: TEXT
+      reason: TEXT
+      actor: TEXT
+      actor_role: TEXT
+      created_at: TEXT

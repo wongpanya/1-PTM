@@ -32,6 +32,8 @@ Build an explainable prototype for scholarship policy analytics. The system demo
 - `src/risk/` contains risk score logic.
 - `src/policy/` contains recommendation logic.
 - `src/governance/` contains PII masking, audit, and access policy logic.
+- `src/agents/` contains the configured human-in-the-loop agent registry.
+- `src/labeling/` contains Label definitions, readiness, review, and leakage validation.
 - `src/utils/` contains shared helpers.
 - `config/` is the source of truth for mappings, rules, metrics, and risk weights.
 - `tests/` must cover cleaning, metrics, risk score, and privacy checks.
@@ -48,6 +50,7 @@ python scripts/import_data.py
 python scripts/build_database.py
 python scripts/validate_data.py
 python scripts/privacy_check.py
+python scripts/validate_labels.py
 ```
 
 If `pytest` is installed, it is also acceptable to run `pytest` after the baseline unit test command.
@@ -68,4 +71,5 @@ pip install -r requirements.txt
 - No direct PII appears in committed sample data.
 - Dashboard defaults to aggregate results.
 - Risk and recommendation output includes explanations.
+- Forecast Labels show version, evidence, leakage cutoff, Agent owner, and human approval status.
 - README commands stay current.

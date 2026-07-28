@@ -30,17 +30,27 @@ class MetricsTest(unittest.TestCase):
             "odos_uid": ["a", "b"],
             "target_graduation_success": [1, 0],
             "target_scholarship_risk": [0, 1],
+            "target_dropout": [0, 1],
+            "target_termination": [0, 0],
             "target_tracking_risk": [0, 1],
             "target_employment_ready": [1, 0],
             "income_monthly_est": [10000, None],
             "gpa_numeric": [3.0, None],
             "current_country": ["ไทย", "ญี่ปุ่น"],
             "current_field_group": ["วิศวกรรม", "แพทย์"],
+            "field_job_fit_level": [2, 1],
+            "local_fit_level": [3, None],
         })
         metrics = overview_metrics(df)
         self.assertEqual(metrics["total_recipients"], 2)
         self.assertEqual(metrics["completion_rate"], 50.0)
         self.assertEqual(metrics["employment_rate"], 50.0)
+        self.assertEqual(metrics["dropout_rate"], 50.0)
+        self.assertEqual(metrics["termination_rate"], 0.0)
+        self.assertEqual(metrics["field_job_fit_rate"], 50.0)
+        self.assertEqual(metrics["field_job_fit_denominator"], 2)
+        self.assertEqual(metrics["local_fit_rate"], 100.0)
+        self.assertEqual(metrics["local_fit_denominator"], 1)
         self.assertEqual(metrics["income_availability_rate"], 50.0)
         self.assertEqual(metrics["countries_count"], 2)
 
@@ -56,9 +66,25 @@ class MetricsTest(unittest.TestCase):
             "province": ["A", "B", "A"],
             "current_country": ["TH", "JP", "TH"],
             "current_field_group": ["ENG", "MED", "ENG"],
+            "analysis_year": [2010, 2011, 2010],
+            "district": ["A1", "B1", "A2"],
+            "region": ["N", "S", "N"],
+            "current_field": ["Engineering", "Medicine", "Engineering"],
+            "standardized_university_name": ["U1", "U2", "U1"],
+            "employer_sector_code": ["PRIVATE", "GOV", "PRIVATE"],
             "target_graduation_success": [1, 0, 1],
         })
-        filtered = apply_filters(df, cohorts=[1], provinces=["A"])
+        filtered = apply_filters(
+            df,
+            cohorts=[1],
+            provinces=["A"],
+            analysis_years=[2010],
+            districts=["A1"],
+            regions=["N"],
+            fields=["Engineering"],
+            universities=["U1"],
+            employer_sectors=["PRIVATE"],
+        )
         self.assertEqual(len(filtered), 1)
         grouped = rate_by_group(df, "cohort", "target_graduation_success")
         self.assertEqual(float(grouped.loc[grouped["cohort"] == 1, "rate"].iloc[0]), 50.0)
@@ -67,11 +93,13 @@ class MetricsTest(unittest.TestCase):
         df = pd.DataFrame({
             "current_country": ["TH", "TH", "JP"],
             "current_field_group": ["ENG", "MED", "ENG"],
-            "income_monthly_est": [10000, 30000, None],
+            "income_monthly_est": [10000, 30000, 999999999],
         })
         summary = income_summary(df)
         self.assertEqual(summary["records_with_income"], 2)
         self.assertEqual(summary["median_income"], 20000)
+        self.assertEqual(summary["average_income"], 20000)
+        self.assertEqual(summary["records_with_income"], 2)
         grouped = grouped_counts(df, ["current_country", "current_field_group"])
         self.assertIn("count", grouped.columns)
 
@@ -84,6 +112,31 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(list(summary["field"]), ["A"])
         self.assertEqual(int(summary.iloc[0]["count"]), 3)
         self.assertEqual(float(summary.iloc[0]["median"]), 20000.0)
+
+    def test_group_summaries_preserve_schema_for_empty_filtered_data(self):
+        empty = pd.DataFrame(
+            columns=[
+                "cohort",
+                "employment_type",
+                "work_start_date",
+                "income_monthly_est",
+                "field_job_fit_level",
+                "local_fit_level",
+                "target_tracking_risk",
+            ]
+        )
+        coverage = followup_coverage_by_group(empty, "cohort")
+        readiness = group_readiness_summary(empty, "cohort")
+        self.assertEqual(
+            list(coverage.columns),
+            ["cohort", "count", "followup_completeness", "tracking_gap_rate"],
+        )
+        self.assertEqual(
+            list(readiness.columns),
+            ["cohort", "count", "dashboard_readiness", "policy_readiness", "ml_readiness"],
+        )
+        self.assertTrue(coverage.empty)
+        self.assertTrue(readiness.empty)
 
     def test_data_quality_summary_marks_readiness_and_issues(self):
         df = pd.DataFrame({
@@ -160,9 +213,14 @@ class MetricsTest(unittest.TestCase):
         self.assertGreater(float(coverage.iloc[0]["followup_completeness"]), 0)
 
     def test_remove_forbidden_display_columns(self):
-        df = pd.DataFrame({"odos_uid": ["a"], "phone_number": ["x"], "contract_id": ["y"]})
+        df = pd.DataFrame({
+            "odos_uid": ["a"],
+            "phone_number": ["x"],
+            "contract_id": ["y"],
+            "standardized_university_name": ["University A"],
+        })
         safe = remove_forbidden_display_columns(df)
-        self.assertEqual(list(safe.columns), ["odos_uid"])
+        self.assertEqual(list(safe.columns), ["odos_uid", "standardized_university_name"])
 
     def test_remove_small_groups(self):
         df = pd.DataFrame({"province": ["A", "B"], "count": [4, 5]})

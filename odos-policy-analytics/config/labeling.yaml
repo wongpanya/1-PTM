@@ -1,0 +1,133 @@
+schema_version: 0.1
+workflow:
+  lifecycle: [proposed, needs_review, approved_for_prototype, approved, rejected, abstain]
+  prototype_eligible_states: [approved_for_prototype, approved]
+  production_eligible_states: [approved]
+  split_strategy: cohort_or_time
+  individual_labels_internal_only: true
+  minimum_inter_annotator_agreement: 0.8
+  disagreement_resolution: scholarship_education_expert
+  prototype_status: approved_by_project_owner
+  prototype_approval_date: 2026-07-28
+  prototype_approval_scope: prototype_ml_experiment_only
+targets:
+  target_graduation_success:
+    priority: 1
+    label_version: graduation-label-v0.1
+    label_th: สำเร็จการศึกษา
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [project_condition_status, study_start_date, graduation_expected_date]
+    rule_source: config/risk_rules.yaml
+    owner_agent: risk
+    human_approver_role: scholarship_education_expert
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ใช้เฉพาะ feature ที่เกิดก่อนวันที่สังเกตผลการสำเร็จการศึกษา
+    prohibited_features: [project_condition_status, target_graduation_success, target_dropout, target_termination]
+  target_dropout:
+    priority: 2
+    label_version: dropout-label-v0.1
+    label_th: ลาออก
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [project_condition_status, dropout_date]
+    rule_source: config/cleaning_rules.yaml
+    owner_agent: risk
+    human_approver_role: scholarship_education_expert
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ใช้เฉพาะ feature ที่เกิดก่อนวันที่ลาออกหรือวันที่ปิดรอบติดตาม
+    prohibited_features: [project_condition_status, dropout_date, target_dropout]
+  target_termination:
+    priority: 2
+    label_version: termination-label-v0.1
+    label_th: พ้นสภาพ
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [project_condition_status]
+    rule_source: config/cleaning_rules.yaml
+    owner_agent: risk
+    human_approver_role: scholarship_education_expert
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ใช้เฉพาะ feature ที่เกิดก่อนวันที่พ้นสภาพหรือวันที่ปิดรอบติดตาม
+    prohibited_features: [project_condition_status, target_termination]
+  target_scholarship_risk:
+    priority: 2
+    label_version: scholarship-risk-label-v0.1
+    label_th: ความเสี่ยงสถานะทุน
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [project_condition_status, study_duration_years]
+    rule_source: config/risk_rules.yaml
+    owner_agent: risk
+    human_approver_role: scholarship_education_expert
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ต้องสร้าง snapshot ณ วันที่ประเมินและห้ามใช้สถานะที่เกิดภายหลัง
+    prohibited_features: [target_scholarship_risk, risk_score, risk_level]
+  target_tracking_risk:
+    priority: 2
+    label_version: tracking-risk-label-v0.1
+    label_th: ติดตามข้อมูลไม่ได้
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [current_status, employment_type]
+    rule_source: config/cleaning_rules.yaml
+    owner_agent: data_steward
+    human_approver_role: data_definition_owner
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: กำหนดรอบติดตามและวันที่ปิดข้อมูลก่อนสร้าง Label
+    prohibited_features: [current_status, employment_type, target_tracking_risk]
+  target_employment_ready:
+    priority: 3
+    label_version: employment-label-v0.1
+    label_th: มีงานทำหรือมีผลลัพธ์การจ้างงาน
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [employment_type, work_start_date]
+    rule_source: config/cleaning_rules.yaml
+    owner_agent: analytics
+    human_approver_role: analytics_lead
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ใช้ feature ก่อนวันที่เริ่มงานและแยกช่วงเวลาหลังสำเร็จการศึกษา
+    prohibited_features: [employment_type, work_start_date, employer_sector_code, target_employment_ready]
+  target_field_mismatch:
+    priority: 3
+    label_version: field-fit-label-v0.1
+    label_th: งานไม่สอดคล้องกับสาขา
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [field_job_fit_level, current_field_group, employment_type]
+    rule_source: config/cleaning_rules.yaml
+    owner_agent: analytics
+    human_approver_role: analytics_lead
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ใช้เป็น outcome หลังเริ่มงาน ไม่ใช้ field_job_fit_level เป็น feature
+    prohibited_features: [field_job_fit_level, field_job_fit, target_field_mismatch]
+  target_local_mismatch:
+    priority: 3
+    label_version: local-fit-label-v0.1
+    label_th: งานไม่สอดคล้องกับท้องถิ่น
+    label_type: binary
+    allowed_values: [0, 1]
+    evidence_fields: [local_fit_level, province, employment_type]
+    rule_source: config/cleaning_rules.yaml
+    owner_agent: policy
+    human_approver_role: policy_owner
+    approval_status: approved_for_prototype
+    leakage_cutoff_rule: ใช้เป็น outcome หลังเริ่มงานและต้องรับรองนิยามคำว่าท้องถิ่น
+    prohibited_features: [local_fit_level, local_fit, target_local_mismatch]
+review_template:
+  required_columns:
+    - label_record_id
+    - source_snapshot_id
+    - target_name
+    - proposed_label
+    - final_label
+    - label_status
+    - evidence_fields
+    - rule_version
+    - assigned_agent
+    - human_reviewer_role
+    - review_reason
+    - reviewed_at
+    - effective_as_of
+  forbidden_columns: [name, phone, address, contract_no, citizen_id, passport_no, email]

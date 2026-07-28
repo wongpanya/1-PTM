@@ -10,6 +10,7 @@ from src.utils.config import PROJECT_ROOT, load_yaml
 
 
 AGGREGATE_MISSING_LABEL = "ไม่ระบุ"
+SAFE_NAME_COLUMNS = {"standardized_university_name"}
 
 
 def cleaned_dataset_path() -> Path:
@@ -22,7 +23,7 @@ def cleaned_dataset_path() -> Path:
 def load_analytics_dataset(path: str | Path | None = None) -> pd.DataFrame:
     dataset_path = Path(path) if path else cleaned_dataset_path()
     df = pd.read_csv(dataset_path)
-    return remove_forbidden_display_columns(df)
+    return ensure_dashboard_fields(remove_forbidden_display_columns(df))
 
 
 def remove_forbidden_display_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -39,9 +40,35 @@ def remove_forbidden_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     safe_columns = [
         column
         for column in df.columns
-        if not any(fragment in column.lower() for fragment in forbidden_fragments)
+        if column in SAFE_NAME_COLUMNS
+        or not any(fragment in column.lower() for fragment in forbidden_fragments)
     ]
     return df[safe_columns].copy()
+
+
+def ensure_dashboard_fields(df: pd.DataFrame) -> pd.DataFrame:
+    """Backfill safe derived fields when an older no-PII sample is loaded."""
+    working = df.copy()
+    if "analysis_year" not in working:
+        year = pd.Series(pd.NA, index=working.index, dtype="Int64")
+        for column in ("study_start_date", "graduation_expected_date", "work_start_date"):
+            if column in working:
+                candidate = pd.to_datetime(working[column], errors="coerce").dt.year.astype("Int64")
+                year = year.fillna(candidate)
+        working["analysis_year"] = year
+
+    if "employer_sector_code" not in working and "employment_type" in working:
+        rules = load_yaml("config/cleaning_rules.yaml")
+        mapping = rules.get("category_mappings", {}).get("employer_sector_codes", {})
+        working["employer_sector_code"] = working["employment_type"].map(mapping)
+
+    if "target_dropout" not in working:
+        status = working.get("project_condition_status", pd.Series(index=working.index, dtype=object))
+        working["target_dropout"] = status.eq("ลาออก").astype(int)
+    if "target_termination" not in working:
+        status = working.get("project_condition_status", pd.Series(index=working.index, dtype=object))
+        working["target_termination"] = status.eq("พ้นสภาพ").astype(int)
+    return working
 
 
 def metric_definitions() -> dict[str, Any]:
@@ -54,6 +81,12 @@ def apply_filters(
     provinces: list[str] | None = None,
     countries: list[str] | None = None,
     field_groups: list[str] | None = None,
+    analysis_years: list[Any] | None = None,
+    districts: list[str] | None = None,
+    regions: list[str] | None = None,
+    fields: list[str] | None = None,
+    universities: list[str] | None = None,
+    employer_sectors: list[str] | None = None,
 ) -> pd.DataFrame:
     filtered = df.copy()
     filters = {
@@ -61,6 +94,12 @@ def apply_filters(
         "province": provinces or [],
         "current_country": countries or [],
         "current_field_group": field_groups or [],
+        "analysis_year": analysis_years or [],
+        "district": districts or [],
+        "region": regions or [],
+        "current_field": fields or [],
+        "standardized_university_name": universities or [],
+        "employer_sector_code": employer_sectors or [],
     }
     for column, values in filters.items():
         if values and column in filtered:
@@ -81,16 +120,24 @@ def overview_metrics(df: pd.DataFrame) -> dict:
     risk = int((df["target_scholarship_risk"] == 1).sum()) if "target_scholarship_risk" in df else 0
     tracking = int((df["target_tracking_risk"] == 1).sum()) if "target_tracking_risk" in df else 0
     employed = int((df["target_employment_ready"] == 1).sum()) if "target_employment_ready" in df else 0
-    income_available = int(df["income_monthly_est"].notna().sum()) if "income_monthly_est" in df else 0
+    dropout = int((df["target_dropout"] == 1).sum()) if "target_dropout" in df else 0
+    termination = int((df["target_termination"] == 1).sum()) if "target_termination" in df else 0
+    income_available = int(len(valid_income_values(df)))
     gpa_available = int(df["gpa_numeric"].notna().sum()) if "gpa_numeric" in df else 0
     countries = int(df["current_country"].dropna().nunique()) if "current_country" in df else 0
     field_groups = int(df["current_field_group"].dropna().nunique()) if "current_field_group" in df else 0
+    field_fit = fit_rate_summary(df, "field_job_fit_level")
+    local_fit = fit_rate_summary(df, "local_fit_level")
     return {
         "total_recipients": distinct_total,
         "completion_count": completion,
         "completion_rate": safe_rate(completion, total),
         "scholarship_risk_count": risk,
         "scholarship_risk_rate": safe_rate(risk, total),
+        "dropout_count": dropout,
+        "dropout_rate": safe_rate(dropout, total),
+        "termination_count": termination,
+        "termination_rate": safe_rate(termination, total),
         "tracking_risk_count": tracking,
         "tracking_risk_rate": safe_rate(tracking, total),
         "employed_count": employed,
@@ -101,6 +148,26 @@ def overview_metrics(df: pd.DataFrame) -> dict:
         "gpa_availability_rate": safe_rate(gpa_available, total),
         "countries_count": countries,
         "field_groups_count": field_groups,
+        "field_job_fit_count": field_fit["fit_count"],
+        "field_job_fit_denominator": field_fit["denominator"],
+        "field_job_fit_rate": field_fit["rate"],
+        "local_fit_count": local_fit["fit_count"],
+        "local_fit_denominator": local_fit["denominator"],
+        "local_fit_rate": local_fit["rate"],
+    }
+
+
+def fit_rate_summary(df: pd.DataFrame, level_column: str, threshold: float = 2) -> dict[str, float | int]:
+    """Calculate the share rated medium-or-higher among records with a fit response."""
+    if level_column not in df:
+        return {"fit_count": 0, "denominator": 0, "rate": 0.0}
+    values = pd.to_numeric(df[level_column], errors="coerce").dropna()
+    denominator = int(len(values))
+    fit_count = int(values.ge(threshold).sum())
+    return {
+        "fit_count": fit_count,
+        "denominator": denominator,
+        "rate": safe_rate(fit_count, denominator),
     }
 
 
@@ -157,7 +224,7 @@ def rate_by_group(df: pd.DataFrame, group_column: str, target_column: str) -> pd
 def income_summary(df: pd.DataFrame) -> dict[str, float | int]:
     if "income_monthly_est" not in df:
         return {"records_with_income": 0, "median_income": 0.0, "average_income": 0.0}
-    values = pd.to_numeric(df["income_monthly_est"], errors="coerce").dropna()
+    values = valid_income_values(df)
     if values.empty:
         return {"records_with_income": 0, "median_income": 0.0, "average_income": 0.0}
     return {
@@ -165,6 +232,17 @@ def income_summary(df: pd.DataFrame) -> dict[str, float | int]:
         "median_income": round(float(values.median()), 2),
         "average_income": round(float(values.mean()), 2),
     }
+
+
+def valid_income_values(df: pd.DataFrame) -> pd.Series:
+    """Return numeric monthly income values inside the configured valid range."""
+    if "income_monthly_est" not in df:
+        return pd.Series(dtype=float)
+    validation = load_yaml("config/phase4_pipeline.yaml").get("validation", {})
+    minimum = float(validation.get("income_min", 0))
+    maximum = float(validation.get("income_max", 500000))
+    values = pd.to_numeric(df["income_monthly_est"], errors="coerce").dropna()
+    return values[values.between(minimum, maximum)]
 
 
 def income_box_summary(
@@ -182,6 +260,13 @@ def income_box_summary(
     working[group_column] = working[group_column].fillna(AGGREGATE_MISSING_LABEL)
     working[value_column] = pd.to_numeric(working[value_column], errors="coerce")
     working = working.dropna(subset=[value_column])
+    validation = load_yaml("config/phase4_pipeline.yaml").get("validation", {})
+    working = working[
+        working[value_column].between(
+            float(validation.get("income_min", 0)),
+            float(validation.get("income_max", 500000)),
+        )
+    ]
     if working.empty:
         return pd.DataFrame(columns=[group_column, "count", "minimum", "q1", "median", "q3", "maximum"])
 
@@ -341,6 +426,10 @@ def group_readiness_summary(
     if group_column not in df:
         return pd.DataFrame(columns=[group_column, "count", *use_cases.keys()])
 
+    output_columns = [group_column, "count", *use_cases.keys()]
+    if df.empty:
+        return pd.DataFrame(columns=output_columns)
+
     rows = []
     working = df.assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
     for group, subset in working.groupby(group_column, dropna=False):
@@ -353,7 +442,12 @@ def group_readiness_summary(
                 else 0.0
             )
         rows.append(row)
-    return remove_small_groups(pd.DataFrame(rows), min_size=min_size).sort_values("count", ascending=False)
+    if not rows:
+        return pd.DataFrame(columns=output_columns)
+    return remove_small_groups(
+        pd.DataFrame(rows, columns=output_columns),
+        min_size=min_size,
+    ).sort_values("count", ascending=False)
 
 
 def outcome_by_group(
@@ -365,6 +459,8 @@ def outcome_by_group(
     targets = {
         "completion_rate": "target_graduation_success",
         "employment_rate": "target_employment_ready",
+        "dropout_rate": "target_dropout",
+        "termination_rate": "target_termination",
         "scholarship_risk_rate": "target_scholarship_risk",
         "tracking_gap_rate": "target_tracking_risk",
     }
@@ -399,6 +495,10 @@ def followup_coverage_by_group(
     ]
     if group_column not in df:
         return pd.DataFrame(columns=[group_column, "count", "followup_completeness", "tracking_gap_rate"])
+    output_columns = [group_column, "count", "followup_completeness", "tracking_gap_rate"]
+    if df.empty:
+        return pd.DataFrame(columns=output_columns)
+
     working = df.assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
     rows = []
     for group, subset in working.groupby(group_column, dropna=False):
@@ -417,7 +517,9 @@ def followup_coverage_by_group(
                 "tracking_gap_rate": round(tracking, 2),
             }
         )
-    return remove_small_groups(pd.DataFrame(rows), min_size=min_size).sort_values(
+    if not rows:
+        return pd.DataFrame(columns=output_columns)
+    return remove_small_groups(pd.DataFrame(rows, columns=output_columns), min_size=min_size).sort_values(
         ["followup_completeness", "count"], ascending=[True, False]
     )
 
@@ -429,7 +531,7 @@ def _expected_type(field: str) -> str:
         return "binary"
     if field.endswith("_level") or field.endswith("_years") or field.endswith("_numeric") or field.endswith("_est"):
         return "numeric"
-    if field in {"source_id", "cohort", "birth_year_be", "province_code"}:
+    if field in {"source_id", "cohort", "birth_year_be", "province_code", "analysis_year"}:
         return "integer"
     return "category/text"
 

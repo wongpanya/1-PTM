@@ -32,9 +32,12 @@ target_columns:
   - target_employment_ready
   - target_field_mismatch
   - target_local_mismatch
+  - target_dropout
+  - target_termination
 numeric_columns:
   - cohort
   - birth_year_be
+  - analysis_year
   - province_code
   - gpa_numeric
   - study_duration_years
@@ -62,6 +65,8 @@ allowed_values:
   target_employment_ready: [0, 1]
   target_field_mismatch: [0, 1]
   target_local_mismatch: [0, 1]
+  target_dropout: [0, 1]
+  target_termination: [0, 1]
   split: [development, validation]
 quality_thresholds:
   max_duplicate_primary_keys: 0

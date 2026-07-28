@@ -1,4 +1,5 @@
-schema_version: 0.1
+schema_version: 0.2
+cleaning_rules_path: config/cleaning_rules.yaml
 source:
   default_excel_path: ../phase1_outputs/raw/690724 DB_ODOS Students+.xlsx
   data_sheet: DB_Students
@@ -45,6 +46,7 @@ column_indexes:
   current_country: 49
   current_field_group: 50
   current_field: 51
+  current_university: 52
   latest_degree: 63
   gpa_raw: 64
   employment_type: 84

@@ -36,9 +36,40 @@ rules:
     name: government_preference_flag
     description: Map government work preference to 1/0.
     reason: Enables policy interest metrics.
+  - id: CLN-010
+    name: derive_analysis_year
+    description: Use the study-start year as analysis_year, then graduation-expected year and work-start year as fallbacks.
+    reason: Provides one documented annual filter without mixing multiple date definitions in the interface.
+  - id: CLN-011
+    name: standardize_current_university
+    description: Normalize whitespace and map approved aliases for the current university name.
+    reason: Enables aggregate university comparisons while retaining the source label when no approved alias exists.
+  - id: CLN-012
+    name: employer_sector_code
+    description: Map standardized employment types to non-PII employer-sector codes.
+    reason: Supports sector comparisons without exposing employer names.
+category_mappings:
+  university_aliases:
+    ม.มหิดล: มหาวิทยาลัยมหิดล
+    ม.รังสิต: มหาวิทยาลัยรังสิต
+    จุฬาฯ: จุฬาลงกรณ์มหาวิทยาลัย
+    มข.: มหาวิทยาลัยขอนแก่น
+    มช.: มหาวิทยาลัยเชียงใหม่
+    มธ.: มหาวิทยาลัยธรรมศาสตร์
+    มก.: มหาวิทยาลัยเกษตรศาสตร์
+    มศว: มหาวิทยาลัยศรีนครินทรวิโรฒ
+  employer_sector_codes:
+    ภาครัฐ: GOV
+    ภาคเอกชน: PRIVATE
+    รัฐวิสาหกิจ: SOE
+    ธุรกิจส่วนตัว: SELF
+    องค์กรเอกชนเพื่อสาธารณประโยชน์: NPO
+    อื่นๆ: OTHER
 deferred_rules:
   - full_geocoding
   - full_occupation_taxonomy
   - income_outlier_treatment
   - missing_value_imputation
   - advanced_ml_feature_engineering
+  - official_university_reference_codes
+  - employer_organization_taxonomy

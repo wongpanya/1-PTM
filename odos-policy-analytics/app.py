@@ -1,11 +1,15 @@
 import streamlit as st
 
 from src.ingestion.data_access import scalar
+from src.utils.appearance_v1 import render_appearance
 from src.utils.config import load_yaml
+from src.utils.metric_surfaces_v2 import render_metric_surface_styles
 from src.utils.ui import configure_page, render_database_status, render_header, render_table_status
 
 
 configure_page("Home")
+render_metric_surface_styles()
+render_appearance()
 
 config = load_yaml("config/app_config.yaml")
 render_header(config["app"]["title"], config["app"]["subtitle_th"])

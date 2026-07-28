@@ -6,17 +6,74 @@ roles:
     can_import: true
     can_export_aggregate: true
     can_view_audit: true
+    can_predict_individual: false
+    can_review_individual: false
+    can_approve_individual: false
+    can_view_individual_audit: true
     description_th: ผู้ดูแลระบบต้นแบบและข้อมูล
   Analyst:
     can_import: false
     can_export_aggregate: true
     can_view_audit: true
+    can_predict_individual: false
+    can_review_individual: false
+    can_approve_individual: false
+    can_view_individual_audit: false
     description_th: นักวิเคราะห์ที่ดูผลรวมและส่งออกข้อมูล aggregate ได้
   Viewer:
     can_import: false
     can_export_aggregate: false
     can_view_audit: false
+    can_predict_individual: false
+    can_review_individual: false
+    can_approve_individual: false
+    can_view_individual_audit: false
     description_th: ผู้ชมผลลัพธ์รวม ไม่เห็นเมนูนำเข้าข้อมูลและไม่ส่งออกข้อมูล
+  CaseOfficer:
+    can_import: false
+    can_export_aggregate: false
+    can_view_audit: false
+    can_predict_individual: true
+    can_review_individual: false
+    can_approve_individual: false
+    can_view_individual_audit: false
+    description_th: เจ้าหน้าที่ผู้สร้างคำขอพยากรณ์และดูเฉพาะเคสที่ตนสร้าง
+  HumanReviewer:
+    can_import: false
+    can_export_aggregate: false
+    can_view_audit: false
+    can_predict_individual: false
+    can_review_individual: true
+    can_approve_individual: false
+    can_view_individual_audit: false
+    description_th: ผู้ตรวจข้อมูลและผลโมเดล มีสิทธิ์ยืนยัน override หรือขอข้อมูลเพิ่ม
+  DomainApprover:
+    can_import: false
+    can_export_aggregate: false
+    can_view_audit: false
+    can_predict_individual: false
+    can_review_individual: false
+    can_approve_individual: true
+    can_view_individual_audit: false
+    description_th: ผู้เชี่ยวชาญที่อนุมัติแผนช่วยเหลือหลัง Human review
+  ModelOwner:
+    can_import: false
+    can_export_aggregate: true
+    can_view_audit: true
+    can_predict_individual: false
+    can_review_individual: false
+    can_approve_individual: false
+    can_view_individual_audit: false
+    description_th: ผู้ดูแล Model registry ประสิทธิภาพ calibration และ threshold
+  DPOAuditor:
+    can_import: false
+    can_export_aggregate: false
+    can_view_audit: true
+    can_predict_individual: false
+    can_review_individual: false
+    can_approve_individual: false
+    can_view_individual_audit: true
+    description_th: ผู้ตรวจวัตถุประสงค์ สิทธิ์ การเข้าถึง และ Audit trail
 export:
   allowed_scope: aggregate_only
   allowed_formats: [csv]

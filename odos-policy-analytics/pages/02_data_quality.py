@@ -10,10 +10,15 @@ from src.analytics.metrics import (
     readiness_scorecard,
 )
 from src.governance.privacy import minimum_group_size
+from src.utils.appearance_v1 import render_appearance
+from src.utils.chart_surfaces_v2 import render_chart
+from src.utils.metric_surfaces_v2 import render_metric_surface_styles
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
 configure_page("Data Quality")
+render_metric_surface_styles()
+render_appearance()
 render_header(
     "Data Quality",
     "ตรวจความพร้อมของข้อมูลสำหรับ Dashboard, Analytics, Policy และ ML พร้อมเหตุผลระดับตัวแปร",
@@ -56,7 +61,7 @@ with readiness_tab:
     left, right = st.columns([1, 1])
     with left:
         st.subheader("คะแนนตามวัตถุประสงค์")
-        st.plotly_chart(
+        render_chart(
             px.bar(
                 scorecard,
                 x="use_case",
@@ -72,7 +77,7 @@ with readiness_tab:
         status_counts = quality["readiness_status"].value_counts().reset_index()
         status_counts.columns = ["status", "count"]
         st.subheader("สถานะของตัวแปร")
-        st.plotly_chart(
+        render_chart(
             px.bar(
                 status_counts,
                 x="count",
@@ -88,7 +93,7 @@ with readiness_tab:
     with left:
         missing = quality.sort_values("missing_count", ascending=False).head(20)
         st.subheader("ค่าว่างสูงสุด")
-        st.plotly_chart(
+        render_chart(
             px.bar(
                 missing,
                 x="field",
@@ -101,7 +106,7 @@ with readiness_tab:
     with right:
         issues = quality.sort_values("format_or_standard_issues", ascending=False).head(20)
         st.subheader("ปัญหารูปแบบและความสัมพันธ์")
-        st.plotly_chart(
+        render_chart(
             px.bar(
                 issues,
                 x="field",
@@ -166,7 +171,7 @@ with groups_tab:
             var_name="readiness_type",
             value_name="score",
         )
-        st.plotly_chart(
+        render_chart(
             px.bar(
                 long_quality,
                 x=group_column,

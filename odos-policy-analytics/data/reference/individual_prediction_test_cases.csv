@@ -1,0 +1,13 @@
+﻿case_reference,purpose_code,cohort,sex,region,province,current_country,current_field_group,gpa_numeric,study_duration_years
+TEST-001,prototype_evaluation,1,หญิง,กลาง,กรุงเทพมหานคร,ประเทศไทย,กลุ่มวิศวกรรม,3.85,4.1
+TEST-002,prototype_evaluation,2,ชาย,ตะวันออกเฉียงเหนือ,นครราชสีมา,ประเทศไทย,กลุ่มวิทยาศาสตร์,2.15,7.2
+TEST-003,prototype_evaluation,3,หญิง,เหนือ,เชียงใหม่,ญี่ปุ่น,กลุ่มวิชาชีพเฉพาะทาง,3.45,5
+TEST-004,prototype_evaluation,4,ชาย,ใต้,นครศรีธรรมราช,ประเทศไทย,กลุ่มบริหารจัดการ,1.95,8.4
+TEST-005,prototype_evaluation,1,หญิง,ตะวันออกเฉียงเหนือ,ขอนแก่น,สหรัฐอเมริกา,กลุ่มวิศวกรรม,3.2,6.1
+TEST-006,prototype_evaluation,2,ชาย,ตะวันออก,ชลบุรี,ประเทศไทย,กลุ่มอุตสาหกรรม,2.75,5.5
+TEST-007,prototype_evaluation,3,หญิง,กลาง,พระนครศรีอยุธยา,ประเทศไทย,กลุ่มพาณิชยกรรม,3.65,4.4
+TEST-008,prototype_evaluation,4,ชาย,ตะวันตก,กาญจนบุรี,สหราชอาณาจักร,กลุ่มศิลปศาสตร์,2.4,6.8
+TEST-009,prototype_evaluation,1,หญิง,เหนือ,เชียงราย,ประเทศไทย,กลุ่มเกษตรกรรม,3.05,5.9
+TEST-010,prototype_evaluation,2,ชาย,ใต้,สงขลา,สาธารณรัฐฝรั่งเศส,กลุ่มความคิดสร้างสรรค์,2.9,5.2
+TEST-011,prototype_evaluation,3,หญิง,กลาง,กรุงเทพมหานคร,ประเทศทดสอบ,กลุ่มสาขาทดสอบ,3.1,5.4
+TEST-012,prototype_evaluation,4,ชาย,ตะวันออกเฉียงเหนือ,อุบลราชธานี,ประเทศไทย,กลุ่มวิทยาศาสตร์,,6

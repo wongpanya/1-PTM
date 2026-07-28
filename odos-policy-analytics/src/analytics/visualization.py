@@ -4,7 +4,12 @@ from typing import Any
 
 import pandas as pd
 
-from src.analytics.metrics import AGGREGATE_MISSING_LABEL, remove_small_groups, safe_rate
+from src.analytics.metrics import (
+    AGGREGATE_MISSING_LABEL,
+    remove_small_groups,
+    safe_rate,
+    valid_income_values,
+)
 from src.governance.privacy import minimum_group_size
 from src.utils.config import load_yaml
 
@@ -62,6 +67,8 @@ def aggregate_proportions(
     group_column: str | None = None,
     min_size: int | None = None,
 ) -> pd.DataFrame:
+    if group_column == category_column:
+        group_column = None
     required = [category_column] + ([group_column] if group_column else [])
     if any(column not in df for column in required):
         return pd.DataFrame(columns=[*required, "count", "percent"])
@@ -88,7 +95,11 @@ def aggregate_histogram(
 ) -> pd.DataFrame:
     if value_column not in df:
         return pd.DataFrame(columns=["bin", "count"])
-    values = pd.to_numeric(df[value_column], errors="coerce").dropna()
+    values = (
+        valid_income_values(df)
+        if value_column == "income_monthly_est"
+        else pd.to_numeric(df[value_column], errors="coerce").dropna()
+    )
     if values.empty or values.nunique() < 2:
         return pd.DataFrame(columns=["bin", "count"])
     bucket = pd.cut(values, bins=bins, duplicates="drop")

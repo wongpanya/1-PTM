@@ -34,6 +34,19 @@ class Phase4PipelineTest(unittest.TestCase):
         self.assertEqual(len(df), 3091)
         self.assertNotIn("income_raw", df.columns)
         self.assertNotIn("contract_no", df.columns)
+        self.assertIn("analysis_year", df.columns)
+        self.assertIn("standardized_university_name", df.columns)
+        self.assertIn("employer_sector_code", df.columns)
+        self.assertIn("target_dropout", df.columns)
+        self.assertIn("target_termination", df.columns)
+        self.assertEqual(int(df["target_dropout"].sum()), 100)
+        self.assertEqual(int(df["target_termination"].sum()), 50)
+        self.assertGreater(int(df["analysis_year"].notna().sum()), 3000)
+        self.assertGreater(int(df["standardized_university_name"].notna().sum()), 2900)
+        self.assertEqual(
+            set(df["employer_sector_code"].dropna().unique()),
+            {"GOV", "PRIVATE", "SOE", "SELF", "NPO", "OTHER"},
+        )
 
         report = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertIn("quality_scores", report)

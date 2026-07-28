@@ -1,4 +1,4 @@
-schema_version: 0.3
+schema_version: 0.4
 principles:
   privacy: Show aggregate results only. Do not display row-level student records or PII.
   traceability: Every KPI displayed in Phase 5 must reference this file.
@@ -70,11 +70,29 @@ metrics:
   dropout_rate:
     label_th: Dropout Rate
     category: analytics
+    formula: sum(target_dropout == 1) / count_records * 100
+    numerator: target_dropout == 1
+    denominator: all_filtered_records
+    display_format: percent
+    definition_th: สัดส่วนผู้รับทุนที่มีสถานะตามเงื่อนไขโครงการเป็นลาออกในชุดข้อมูลที่กรองแล้ว
+    supported_by_columns: [target_dropout, project_condition_status]
+  termination_rate:
+    label_th: Termination Rate
+    category: analytics
+    formula: sum(target_termination == 1) / count_records * 100
+    numerator: target_termination == 1
+    denominator: all_filtered_records
+    display_format: percent
+    definition_th: สัดส่วนผู้รับทุนที่มีสถานะตามเงื่อนไขโครงการเป็นพ้นสภาพในชุดข้อมูลที่กรองแล้ว
+    supported_by_columns: [target_termination, project_condition_status]
+  scholarship_risk_rate:
+    label_th: Scholarship Risk Rate
+    category: analytics
     formula: sum(target_scholarship_risk == 1) / count_records * 100
     numerator: target_scholarship_risk == 1
     denominator: all_filtered_records
     display_format: percent
-    definition_th: สัดส่วนผู้รับทุนที่อยู่ในกลุ่มเสี่ยงด้านสถานะทุน เช่น ลาออก พ้นสภาพ เกินระยะเวลา หรือสละสิทธิ์ ตามกฎ Phase 4
+    definition_th: สัดส่วนผู้รับทุนที่อยู่ในกลุ่มลาออก พ้นสภาพ เกินระยะเวลารับทุน หรือสละสิทธิ์ ตามกฎ Phase 4
     supported_by_columns: [target_scholarship_risk, project_condition_status]
   employment_rate:
     label_th: Employment Rate
@@ -88,29 +106,47 @@ metrics:
   income_distribution:
     label_th: Income Distribution
     category: analytics
-    formula: distribution(income_monthly_est where not null)
+    formula: distribution(income_monthly_est where 0 <= value <= 500000)
     numerator: income_monthly_est
     denominator: records_with_income
     display_format: histogram
-    definition_th: การกระจายรายได้ประมาณการรายเดือน เฉพาะรายการที่มีข้อมูลรายได้ที่แปลงเป็นตัวเลขได้
+    definition_th: การกระจายรายได้ประมาณการรายเดือน เฉพาะรายการที่แปลงเป็นตัวเลขได้และอยู่ในช่วงที่กำหนด 0-500,000 บาทต่อเดือน
+    supported_by_columns: [income_monthly_est]
+  average_income:
+    label_th: รายได้เฉลี่ย
+    category: analytics
+    formula: mean(income_monthly_est where 0 <= value <= 500000)
+    numerator: income_monthly_est
+    denominator: records_with_income
+    display_format: currency
+    definition_th: ค่าเฉลี่ยรายได้ประมาณการต่อเดือน เฉพาะระเบียนที่แปลงเป็นตัวเลขได้และอยู่ในช่วง 0-500,000 บาทต่อเดือน
+    supported_by_columns: [income_monthly_est]
+  median_income:
+    label_th: รายได้มัธยฐาน
+    category: analytics
+    formula: median(income_monthly_est where 0 <= value <= 500000)
+    numerator: income_monthly_est
+    denominator: records_with_income
+    display_format: currency
+    definition_th: ค่ากลางรายได้ประมาณการต่อเดือน เฉพาะระเบียนที่แปลงเป็นตัวเลขได้และอยู่ในช่วง 0-500,000 บาทต่อเดือน
     supported_by_columns: [income_monthly_est]
   field_job_fit_rate:
     label_th: Field-Job Fit
     category: analytics
-    formula: average(field_job_fit_level) and distribution(field_job_fit)
-    numerator: field_job_fit_level
+    formula: count(field_job_fit_level >= 2) / count(non_null field_job_fit_level) * 100
+    numerator: field_job_fit_level >= 2
     denominator: records_with_field_job_fit
     display_format: percent_or_distribution
-    definition_th: การกระจายระดับความสอดคล้องระหว่างสาขาที่เรียนกับงานตามข้อมูลที่ผู้รับทุนรายงาน
+    definition_th: สัดส่วนผู้มีข้อมูลความสอดคล้องที่อยู่ในระดับ 2 ขึ้นไป โดยแสดงจำนวนตัวตั้งและ denominator ควบคู่กัน
     supported_by_columns: [field_job_fit, field_job_fit_level]
   local_development_fit_rate:
     label_th: Local Development Fit
     category: analytics
-    formula: average(local_fit_level) and distribution(local_fit)
-    numerator: local_fit_level
+    formula: count(local_fit_level >= 2) / count(non_null local_fit_level) * 100
+    numerator: local_fit_level >= 2
     denominator: records_with_local_fit
     display_format: percent_or_distribution
-    definition_th: การกระจายระดับความสอดคล้องของงานกับการพัฒนาพื้นที่หรือภูมิลำเนาตามข้อมูลที่มี
+    definition_th: สัดส่วนผู้มีข้อมูลความสอดคล้องกับพื้นที่ระดับ 2 ขึ้นไป โดยแสดงจำนวนตัวตั้งและ denominator ควบคู่กัน
     supported_by_columns: [local_fit, local_fit_level]
 data_quality:
   readiness_thresholds:
@@ -121,6 +157,7 @@ data_quality:
     validity: 0.3
   dashboard_ready_fields:
     - odos_uid
+    - analysis_year
     - cohort
     - sex
     - region
@@ -130,15 +167,21 @@ data_quality:
     - current_status
     - current_country
     - current_field_group
+    - current_field
+    - standardized_university_name
     - employment_type
+    - employer_sector_code
     - income_monthly_est
     - field_job_fit_level
     - local_fit_level
     - target_graduation_success
     - target_scholarship_risk
+    - target_dropout
+    - target_termination
     - target_tracking_risk
     - target_employment_ready
   analytics_ready_fields:
+    - analysis_year
     - cohort
     - sex
     - region
@@ -146,29 +189,40 @@ data_quality:
     - district
     - current_country
     - current_field_group
+    - current_field
+    - standardized_university_name
     - project_condition_status
     - employment_type
+    - employer_sector_code
     - income_monthly_est
     - field_job_fit_level
     - local_fit_level
     - target_graduation_success
     - target_scholarship_risk
+    - target_dropout
+    - target_termination
     - target_tracking_risk
     - target_employment_ready
   policy_ready_fields:
+    - analysis_year
     - cohort
     - region
     - province
     - district
     - current_country
     - current_field_group
+    - current_field
+    - standardized_university_name
     - project_condition_status
     - employment_type
+    - employer_sector_code
     - income_monthly_est
     - field_job_fit_level
     - local_fit_level
     - target_graduation_success
     - target_scholarship_risk
+    - target_dropout
+    - target_termination
     - target_tracking_risk
     - target_employment_ready
   ml_feature_fields:
@@ -207,6 +261,7 @@ data_quality:
     - source_id
     - district
     - current_field
+    - standardized_university_name
     - employment_detail
     - workplace_province_country
   ml_leakage_fields:
@@ -244,6 +299,15 @@ data_quality:
     employment_type:
       action_th: ปรับมาตรฐานหมวดหมู่และใช้สร้าง target
       reason_th: ใช้กับ Dashboard/Policy แต่ห้ามเป็น feature เมื่อทำนาย employment target
+    analysis_year:
+      action_th: คำนวณจากปีเริ่มศึกษา โดยใช้ปีคาดว่าจะสำเร็จและปีเริ่มงานเป็น fallback
+      reason_th: ใช้เป็นตัวกรองปีแบบเดียวกันทุก Dashboard และต้องแสดงนิยามปีให้ผู้ใช้เห็น
+    standardized_university_name:
+      action_th: ปรับช่องว่างและ mapping alias ที่ผ่านการกำหนด
+      reason_th: ใช้เปรียบเทียบแบบ aggregate เท่านั้น และยังต้องเชื่อมรหัสสถาบันทางการใน Production
+    employer_sector_code:
+      action_th: สร้างจากประเภทการประกอบอาชีพด้วย mapping ใน cleaning_rules.yaml
+      reason_th: ใช้สรุปภาคส่วนผู้จ้างโดยไม่เปิดเผยชื่อบริษัทหรือหน่วยงาน
     field_job_fit_level:
       action_th: แปลงระดับความสอดคล้องเป็น 0-3
       reason_th: เป็นข้อมูลผลลัพธ์หลังเรียน ใช้สรุปผลหรือเป็น target แต่ไม่ใช้เป็น feature ต้นทาง
@@ -256,6 +320,12 @@ data_quality:
     target_scholarship_risk:
       action_th: สร้างจากกลุ่มสถานะความเสี่ยงที่กำหนด
       reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
+    target_dropout:
+      action_th: สร้างจากสถานะลาออก
+      reason_th: ใช้แยก Dropout Rate ออกจาก Scholarship Risk Rate
+    target_termination:
+      action_th: สร้างจากสถานะพ้นสภาพ
+      reason_th: ใช้แยก Termination Rate ออกจาก Scholarship Risk Rate
     target_tracking_risk:
       action_th: สร้างจากสถานะติดตามข้อมูล
       reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
@@ -264,12 +334,12 @@ data_quality:
       reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
   fields_to_collect:
     - standardized_program_name
-    - standardized_university_name
+    - university_reference_code
     - actual_graduation_date
     - verified_graduation_date
     - verified_employment_date
     - verified_income_band
-    - employer_sector_standard_code
+    - employer_organization_standard_code
     - occupation_standard_code
     - returned_to_domicile_date
     - follow_up_date

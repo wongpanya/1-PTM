@@ -1,0 +1,73 @@
+schema_version: 0.1
+prototype_status: internal_decision_support
+authentication_status: role_simulation_only
+maximum_rows_per_import: 100
+required_columns:
+  - case_reference
+  - purpose_code
+  - cohort
+  - sex
+  - region
+  - province
+  - current_country
+  - current_field_group
+  - gpa_numeric
+  - study_duration_years
+approved_purposes:
+  early_support: คัดกรองเพื่อเสนอการติดตามหรือการช่วยเหลือเชิงป้องกัน
+  prototype_evaluation: ทดสอบระบบและประเมินความเหมาะสมของโมเดล
+approved_targets:
+  target_scholarship_risk:
+    model_key: vote_ensemble
+    model_version: scholarship-risk-v0.1-prototype
+    threshold: 0.5
+    status: approved_for_internal_prototype
+    approver_role: ModelOwner
+    interpretation_notice: ใช้เป็นสัญญาณ early support ห้ามใช้ยกเลิกทุนหรือลดสิทธิ
+  target_graduation_success:
+    model_key: vote_ensemble
+    model_version: graduation-success-v0.1-prototype
+    threshold: 0.5
+    status: approved_for_internal_prototype
+    approver_role: ModelOwner
+    interpretation_notice: เป็นแนวโน้มผลลัพธ์เชิงบวก ข้อมูลปัจจุบันยังไม่ใช่ longitudinal progression แบบสมบูรณ์
+  target_tracking_risk:
+    model_key: vote_ensemble
+    model_version: tracking-risk-v0.1-prototype
+    threshold: 0.5
+    status: approved_for_internal_prototype
+    approver_role: ModelOwner
+    interpretation_notice: ใช้ปรับปรุงกระบวนการติดตามข้อมูล ไม่ใช่การประเมินคุณสมบัติของผู้รับทุน
+  target_employment_ready:
+    model_key: vote_ensemble
+    model_version: employment-ready-v0.1-prototype
+    threshold: 0.5
+    status: approved_for_internal_prototype_proxy
+    approver_role: ModelOwner
+    interpretation_notice: เป็น proxy ของสถานะมีงานทำหรือผลลัพธ์การจ้างงาน ยังไม่ใช่การพยากรณ์รายได้
+  target_field_mismatch:
+    model_key: vote_ensemble
+    model_version: field-mismatch-v0.1-prototype
+    threshold: 0.5
+    status: approved_for_internal_prototype_proxy
+    approver_role: ModelOwner
+    interpretation_notice: ใช้เป็นสัญญาณทบทวนความสอดคล้องสาขา ต้องเชื่อมข้อมูลความต้องการแรงงานก่อนปรับนโยบายทุน
+  target_local_mismatch:
+    model_key: vote_ensemble
+    model_version: local-mismatch-v0.1-prototype
+    threshold: 0.5
+    status: approved_for_internal_prototype_proxy
+    approver_role: ModelOwner
+    interpretation_notice: ใช้เป็นสัญญาณระดับพื้นที่ ต้องรับรองนิยามท้องถิ่นและเชื่อมข้อมูลตลาดแรงงานพื้นที่ก่อนใช้จริง
+review_decisions:
+  confirm: ยืนยันผลเพื่อส่งพิจารณาแผนช่วยเหลือ
+  override: ไม่เห็นด้วยกับระดับแนวโน้มของโมเดล
+  needs_information: ขอข้อมูลเพิ่มเติม
+approval_decisions:
+  approve_support: อนุมัติแผนช่วยเหลือ
+  return_for_review: ส่งกลับให้ทบทวนใหม่
+  close_no_action: ปิดเคสโดยไม่ดำเนินการ
+prohibited_actions:
+  - ยกเลิกทุนหรือลดสิทธิจากผลโมเดลเพียงอย่างเดียว
+  - ปฏิเสธสิทธิหรือดำเนินการเชิงลงโทษโดยไม่มีหลักฐานอื่น
+  - ส่งออกข้อมูลรายบุคคลจาก Prototype

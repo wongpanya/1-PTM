@@ -5,11 +5,15 @@ import streamlit as st
 
 from src.governance.audit import append_audit_event
 from src.governance.privacy import aggregate_csv_bytes, append_export_log, suppress_small_groups
+from src.utils.appearance_v1 import render_appearance
 from src.utils.config import PROJECT_ROOT, load_yaml
+from src.utils.metric_surfaces_v2 import render_metric_surface_styles
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
 configure_page("External Indicators")
+render_metric_surface_styles()
+render_appearance()
 render_header("External Indicators", "ข้อมูลเสริมรายปีสำหรับต้นทุนทุน ตลาดแรงงาน เศรษฐกิจ สังคม และพื้นที่")
 render_database_status()
 

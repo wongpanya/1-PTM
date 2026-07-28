@@ -1,0 +1,60 @@
+schema_version: 0.1
+operating_model: human_in_the_loop
+prototype_notice_th: Agent ช่วยเตรียม ตรวจ และเสนอผลเท่านั้น การรับรอง Label กฎความเสี่ยง และข้อเสนอเชิงนโยบายต้องทำโดยผู้รับผิดชอบที่เป็นมนุษย์
+agents:
+  data_steward:
+    name: Data Steward Agent
+    human_owner_th: Data owner หรือเจ้าหน้าที่ข้อมูล
+    mission_th: ตรวจคุณภาพข้อมูล mapping issue log และหลักฐานของ Label
+    label_responsibility: evidence_preparation
+    required_human_approval: data_definition_owner
+    outputs: [data_quality_report, mapping_issues, label_evidence_manifest]
+    prohibited_actions: [approve_labels, modify_raw_data, expose_pii]
+  analytics:
+    name: Analytics Agent
+    human_owner_th: นักวิเคราะห์ข้อมูลหรือนโยบาย
+    mission_th: ตรวจ KPI ตัวกรอง visualization และสรุปผลที่ไม่เกินหลักฐาน
+    label_responsibility: cohort_and_outcome_profiling
+    required_human_approval: analytics_lead
+    outputs: [kpi_validation, cohort_profile, label_balance_report]
+    prohibited_actions: [approve_labels, create_unsupported_claims, expose_individual_records]
+  risk:
+    name: Risk Agent
+    human_owner_th: ผู้เชี่ยวชาญทุนและการศึกษา
+    mission_th: เสนอกฎ Label คะแนน threshold เหตุผล และข้อจำกัดที่ตรวจสอบย้อนกลับได้
+    label_responsibility: label_definition_owner
+    required_human_approval: scholarship_education_expert
+    outputs: [label_proposals, risk_rule_review, threshold_review]
+    prohibited_actions: [self_approve_labels, automatic_adverse_decisions, use_leakage_features]
+  policy:
+    name: Policy Agent
+    human_owner_th: Policy owner หรือคณะผู้เชี่ยวชาญ
+    mission_th: ตรวจสูตร น้ำหนัก หลักฐาน และการใช้ผลวิเคราะห์เพื่อจัดลำดับ
+    label_responsibility: policy_use_review
+    required_human_approval: policy_owner
+    outputs: [policy_use_constraints, weight_review, recommendation_evidence]
+    prohibited_actions: [automatic_allocation, unsupported_policy_claims, override_label_approval]
+  external_indicator:
+    name: External Indicator Agent
+    human_owner_th: เจ้าของแหล่งข้อมูลหรือนักเศรษฐศาสตร์
+    mission_th: ตรวจแหล่งข้อมูล ปี หน่วย reliability และรอบปรับปรุง
+    label_responsibility: external_feature_validation
+    required_human_approval: source_owner_or_economist
+    outputs: [source_registry, reliability_review, annual_update_log]
+    prohibited_actions: [invent_external_data, mark_unverified_sources_official, approve_outcome_labels]
+  governance:
+    name: Governance Agent
+    human_owner_th: DPO กฎหมาย หรือความมั่นคงปลอดภัย
+    mission_th: ตรวจ PDPA access control retention audit และ incident response
+    label_responsibility: privacy_and_fairness_gate
+    required_human_approval: dpo_or_governance_owner
+    outputs: [privacy_review, access_review, label_audit_review]
+    prohibited_actions: [expose_pii, weaken_minimum_group_size, approve_policy_outcomes]
+  technical:
+    name: Technical Agent
+    human_owner_th: นักพัฒนาระบบหรือ DevOps
+    mission_th: ดูแล deployment database security monitoring backup และ support
+    label_responsibility: reproducibility_and_lineage
+    required_human_approval: technical_lead
+    outputs: [pipeline_run, test_report, model_lineage, deployment_log]
+    prohibited_actions: [change_label_meaning, bypass_tests, commit_secrets]

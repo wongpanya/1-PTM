@@ -222,6 +222,10 @@ def _cell(row: tuple, config: dict[str, Any], field: str):
 
 
 def _clean_records(rows: list[tuple], config: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    cleaning_config = load_yaml(config.get("cleaning_rules_path", "config/cleaning_rules.yaml"))
+    mappings = cleaning_config.get("category_mappings", {})
+    university_aliases = mappings.get("university_aliases", {})
+    employer_sector_codes = mappings.get("employer_sector_codes", {})
     stats = {
         "blank_to_null": 0,
         "error_formula_to_null": 0,
@@ -253,6 +257,7 @@ def _clean_records(rows: list[tuple], config: dict[str, Any]) -> tuple[list[dict
         if income is not None:
             stats["income_parsed"] += 1
 
+        employment_type = standardize_category(_cell(row, config, "employment_type"))
         record = {
             "odos_uid": odos_uid,
             "source_id": source_id,
@@ -281,7 +286,13 @@ def _clean_records(rows: list[tuple], config: dict[str, Any]) -> tuple[list[dict
             "latest_degree": standardize_category(_cell(row, config, "latest_degree")),
             "gpa_numeric": parse_gpa(_cell(row, config, "gpa_raw")),
             "study_duration_years": duration,
-            "employment_type": standardize_category(_cell(row, config, "employment_type")),
+            "analysis_year": _analysis_year(start_date, graduation_date, work_start_date),
+            "standardized_university_name": standardize_category(
+                _cell(row, config, "current_university"),
+                university_aliases,
+            ),
+            "employment_type": employment_type,
+            "employer_sector_code": employer_sector_codes.get(employment_type),
             "employment_detail": standardize_category(_cell(row, config, "employment_detail")),
             "workplace_province_country": standardize_category(_cell(row, config, "workplace_province_country")),
             "work_start_date": work_start_date,
@@ -306,6 +317,8 @@ def _targets(record: dict[str, Any]) -> dict[str, int]:
     employment_ready = {"ภาคเอกชน", "ภาครัฐ", "รัฐวิสาหกิจ", "ธุรกิจส่วนตัว", "องค์กรเอกชนเพื่อสาธารณประโยชน์"}
     return {
         "target_graduation_success": 1 if record.get("project_condition_status") == "สำเร็จการศึกษา" else 0,
+        "target_dropout": 1 if record.get("project_condition_status") == "ลาออก" else 0,
+        "target_termination": 1 if record.get("project_condition_status") == "พ้นสภาพ" else 0,
         "target_scholarship_risk": 1 if record.get("project_condition_status") in risk_statuses else 0,
         "target_tracking_risk": 1 if record.get("employment_type") == "อยู่ระหว่างติดตามข้อมูล" or "ไม่พบในฐานข้อมูล" in str(record.get("current_status") or "") else 0,
         "target_employment_ready": 1 if record.get("employment_type") in employment_ready else 0,
@@ -481,6 +494,17 @@ def _before_after_report(
             ),
         },
     }
+
+
+def _analysis_year(*date_values: str | None) -> int | None:
+    """Return the first valid year using the configured analytical precedence."""
+    for value in date_values:
+        if value:
+            try:
+                return int(str(value)[:4])
+            except (TypeError, ValueError):
+                continue
+    return None
 
 
 def _report_markdown(report: dict[str, Any]) -> str:

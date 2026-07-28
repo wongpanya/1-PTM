@@ -229,6 +229,9 @@ Prototype จะออกแบบ agents เป็น system modules ก่อ�
 - Policy Recommendation Agent: สร้างข้อเสนอเชิงนโยบายจากข้อมูล
 - External Indicator Agent: จัดการ template ข้อมูลเสริมรายปี
 - Governance Agent: จัดการ PII masking, role concept และ audit log
+- Technical Agent: ดูแล reproducibility, deployment, database, security, monitoring และ support
+
+Agent ทุกบทบาททำงานแบบ Human-in-the-loop การรับรอง Label กฎความเสี่ยง น้ำหนักเชิงนโยบาย และข้อกำกับข้อมูลต้องทำโดยผู้รับผิดชอบที่เป็นมนุษย์
 
 ## 11. Technology Direction
 

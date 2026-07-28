@@ -27,3 +27,5 @@ navigation:
     file: pages/06_external_indicators.py
   - label: Governance
     file: pages/07_governance.py
+  - label: Help & Documentation
+    file: pages/08_help_documentation.py

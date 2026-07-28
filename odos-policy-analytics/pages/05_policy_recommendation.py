@@ -2,11 +2,15 @@ import streamlit as st
 
 from src.analytics.metrics import apply_filters, load_analytics_dataset
 from src.policy.recommendations import area_recommendations, field_recommendations, recommendation_summary
+from src.utils.appearance_v1 import render_appearance
 from src.utils.config import load_yaml
+from src.utils.metric_surfaces_v2 import render_metric_surface_styles
 from src.utils.ui import configure_page, render_database_status, render_header
 
 
 configure_page("Policy Recommendation")
+render_metric_surface_styles()
+render_appearance()
 render_header("Policy Recommendation", "Ranking ที่ตรวจสอบย้อนกลับได้จากสูตรและน้ำหนักในระบบ")
 render_database_status()
 

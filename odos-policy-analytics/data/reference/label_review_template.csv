@@ -1,0 +1,3 @@
+label_record_id,source_snapshot_id,target_name,proposed_label,final_label,label_status,evidence_fields,rule_version,assigned_agent,human_reviewer_role,review_reason,reviewed_at,effective_as_of
+EXAMPLE-001,SYNTHETIC-SNAPSHOT,target_graduation_success,1,,proposed,project_condition_status|study_start_date|graduation_expected_date,graduation-label-v0.1,risk,scholarship_education_expert,ตัวอย่างโครงสร้างข้อมูลสังเคราะห์,,
+EXAMPLE-002,SYNTHETIC-SNAPSHOT,target_tracking_risk,0,,needs_review,current_status|employment_type,tracking-risk-label-v0.1,data_steward,data_definition_owner,ตัวอย่างโครงสร้างข้อมูลสังเคราะห์,,

@@ -27,9 +27,12 @@ tables:
     - latest_degree
     - gpa_numeric
     - study_duration_years
+    - analysis_year
+    - standardized_university_name
   employment:
     - odos_uid
     - employment_type
+    - employer_sector_code
     - employment_detail
     - workplace_province_country
     - income_monthly_est

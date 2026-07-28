@@ -43,6 +43,13 @@ class VisualizationTest(unittest.TestCase):
         self.assertEqual(result["status"].tolist(), ["A"])
         self.assertEqual(float(result.iloc[0]["percent"]), 80.0)
 
+    def test_aggregate_proportions_handles_same_category_and_group(self):
+        df = pd.DataFrame({"country": ["TH"] * 8 + ["JP"] * 5})
+        result = aggregate_proportions(df, "country", "country", min_size=5)
+        self.assertEqual(list(result.columns), ["country", "count", "denominator", "percent"])
+        self.assertEqual(int(result["count"].sum()), 13)
+        self.assertAlmostEqual(float(result["percent"].sum()), 100.0, places=2)
+
     def test_aggregate_histogram_returns_only_bins_and_counts(self):
         df = pd.DataFrame({"income": list(range(10, 110, 10))})
         result = aggregate_histogram(df, "income", bins=2, min_size=1)
