@@ -1,0 +1,4 @@
+﻿indicator_id,fiscal_year,indicator_group,indicator_name,level,country,province,field_group,industry,unit,value,source_name,source_url,updated_at,confidence_level,notes
+COST_COUNTRY_YYYY_001,2569,cost,average_scholarship_cost_per_student,country,ตัวอย่างประเทศ,,,,THB/year,,,,,draft,ใช้สำหรับ ROI/SROI ในระยะถัดไป
+LABOR_FIELD_YYYY_001,2569,labor_market,future_workforce_demand_index,field_group,,,กลุ่มวิศวกรรม,,index,,,,,draft,ใช้สำหรับ Future Workforce Demand และ Field Recommendation
+AREA_PROVINCE_YYYY_001,2569,provincial_indicator,provincial_priority_score,province,ประเทศไทย,ตัวอย่างจังหวัด,,,score,,,,,draft,ใช้สำหรับ Area-based Allocation

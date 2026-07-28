@@ -1,0 +1,17 @@
+﻿metric,value
+source_file,690724 DB_ODOS Students+.xlsx
+source_rows_with_id,3091
+source_columns,112
+unique_source_id,3091
+cohorts,"1: 921, 2: 915, 3: 687, 4: 568"
+completion_count,2921
+completion_rate_pct,94.5
+province_distinct,79
+district_distinct,958
+current_country_distinct,23
+current_field_group_distinct,11
+employment_type_distinct,18
+gpa_numeric_available,949
+income_monthly_est_available,1256
+field_job_fit_available,2129
+local_fit_available,1587

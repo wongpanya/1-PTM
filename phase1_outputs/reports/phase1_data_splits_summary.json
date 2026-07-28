@@ -1,0 +1,29 @@
+{
+  "source": "C:\\Users\\Wongpanya.Nu\\Documents\\1-PTM\\phase1_outputs\\data\\core_scholarship_dataset.csv",
+  "split_method": "deterministic SHA256 hash of odos_uid; bucket 0-79 development, 80-99 validation",
+  "total_rows": 3091,
+  "development_rows": 2482,
+  "validation_rows": 609,
+  "safe_columns_count": 63,
+  "target_columns": [
+    "target_graduation_success",
+    "target_scholarship_risk",
+    "target_tracking_risk",
+    "target_employment_ready",
+    "target_field_mismatch",
+    "target_local_mismatch"
+  ],
+  "excluded_columns_due_to_privacy_or_free_text": [
+    "high_school_name",
+    "initial_university",
+    "initial_city_state",
+    "current_university",
+    "current_city_province",
+    "employer",
+    "job_title",
+    "income_raw",
+    "gpa_raw",
+    "other_comments",
+    "officer_notes"
+  ]
+}
