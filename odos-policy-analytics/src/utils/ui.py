@@ -43,4 +43,4 @@ def render_table_status() -> None:
         }
         for table in status["expected_tables"]
     ]
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)

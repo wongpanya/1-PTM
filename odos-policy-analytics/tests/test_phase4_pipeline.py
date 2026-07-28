@@ -15,11 +15,13 @@ class Phase4PipelineTest(unittest.TestCase):
         cleaned_path = Path(result1["outputs"]["cleaned_dataset"])
         issues_path = Path(result1["outputs"]["validation_issues"])
         report_path = Path(result1["outputs"]["before_after_report_json"])
+        field_report_path = Path(result1["outputs"]["field_cleaning_report"])
         log_path = Path(result1["outputs"]["processing_log"])
 
         self.assertTrue(cleaned_path.exists())
         self.assertTrue(issues_path.exists())
         self.assertTrue(report_path.exists())
+        self.assertTrue(field_report_path.exists())
         self.assertTrue(log_path.exists())
 
         first_hash = _sha256(cleaned_path)
@@ -36,6 +38,19 @@ class Phase4PipelineTest(unittest.TestCase):
         report = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertIn("quality_scores", report)
         self.assertIn("issue_count_by_column", report)
+        self.assertIn("structure_validation", report)
+        self.assertIn("readiness_scores", report)
+        self.assertEqual(report["structure_validation"]["missing_sheets"], [])
+        self.assertEqual(report["structure_validation"]["missing_columns"], [])
+
+        field_report = pd.read_csv(field_report_path)
+        self.assertIn("cleaning_action", field_report.columns)
+        self.assertIn("cleaning_reason", field_report.columns)
+        self.assertIn("ml_leakage_risk", field_report.columns)
+
+        issues = pd.read_csv(issues_path)
+        self.assertIn("completed_without_employment_followup", set(issues["code"]))
+        self.assertIn("employed_without_work_start_date", set(issues["code"]))
 
     def test_raw_file_is_outside_repo_and_not_modified(self):
         raw = (PROJECT_ROOT / "../phase1_outputs/raw/690724 DB_ODOS Students+.xlsx").resolve()

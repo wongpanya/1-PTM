@@ -120,7 +120,11 @@ def check_data_pipeline(results: list[dict]) -> pd.DataFrame:
         | (work_start.notna() & start.notna() & (work_start < start))
     ).sum()
     issue_frame = pd.read_csv(first["outputs"]["validation_issues"])
-    recorded_date_issues = int(issue_frame["code"].astype(str).str.contains("date", case=False, na=False).sum()) if not issue_frame.empty else 0
+    recorded_date_issues = (
+        int(issue_frame["code"].astype(str).eq("date_order_invalid").sum())
+        if not issue_frame.empty
+        else 0
+    )
     _check("date_relationships_recorded", int(bad_dates) == recorded_date_issues, f"invalid={int(bad_dates)}, recorded={recorded_date_issues}", results)
     _check("processing_evidence", all(Path(value).exists() for value in first["outputs"].values()), "all pipeline outputs exist", results)
     return cleaned

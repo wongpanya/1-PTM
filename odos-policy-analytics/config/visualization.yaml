@@ -1,0 +1,71 @@
+schema_version: 0.1
+default_mode: Guided Visualization
+modes:
+  - Executive View
+  - Guided Visualization
+  - Custom Visualization
+  - Data Quality View
+questions:
+  ranking:
+    label_th: ต้องการดูจำนวนหรืออันดับ
+    recommended_chart: Dot Plot
+    alternatives: [Bar Chart, Treemap]
+    reason_th: Dot Plot เปรียบเทียบอันดับหลายกลุ่มได้ชัดและใช้พื้นที่น้อย
+    caution_th: แสดงเฉพาะกลุ่มที่ผ่าน minimum group size และจำกัดกลุ่มที่มีอันดับสูงสุด
+    required_fields: [odos_uid]
+  proportion:
+    label_th: ต้องการดูสัดส่วน
+    recommended_chart: 100% Stacked Bar
+    alternatives: [Donut Chart, Treemap]
+    reason_th: 100% Stacked Bar เปรียบเทียบสัดส่วนระหว่างกลุ่มได้แม่นยำกว่า Pie เมื่อมีหลายหมวดหมู่
+    caution_th: Donut ใช้ได้เมื่อมีไม่เกิน 5 หมวดหมู่; หากมากกว่านั้นระบบจะแนะนำ Stacked Bar
+    required_fields: [odos_uid]
+  trend:
+    label_th: ต้องการดูแนวโน้ม
+    recommended_chart: Line Chart
+    alternatives: [Small Multiples, Slope Chart]
+    reason_th: Line Chart ช่วยเห็นทิศทางผลลัพธ์ระหว่างรุ่นอย่างต่อเนื่อง
+    caution_th: รุ่นเป็น cohort comparison ไม่ใช่อนุกรมเวลาติดตามบุคคล และไม่แสดงเหตุและผล
+    required_fields: [cohort, target_graduation_success, target_employment_ready]
+  distribution:
+    label_th: ต้องการดูการกระจาย
+    recommended_chart: Aggregate Box Plot
+    alternatives: [Histogram, ECDF]
+    reason_th: Box Plot แบบ aggregate แสดง median และ quartile โดยไม่ส่งค่ารายบุคคลไปยังหน้าเว็บ
+    caution_th: ผลลัพธ์ครอบคลุมเฉพาะระเบียนที่มีข้อมูลรายได้และกลุ่มที่ผ่านเกณฑ์
+    required_fields: [income_monthly_est]
+  relationship:
+    label_th: ต้องการดูความสัมพันธ์
+    recommended_chart: Bubble Plot
+    alternatives: [Scatter Plot, Quadrant Matrix]
+    reason_th: Bubble Plot เปรียบเทียบจำนวนผู้รับทุน ผลสำเร็จ และการมีงานทำพร้อมกัน
+    caution_th: ความสัมพันธ์ที่เห็นไม่ใช่หลักฐานเชิงสาเหตุ
+    required_fields: [target_graduation_success, target_employment_ready]
+  pathway:
+    label_th: ต้องการดูเส้นทางของผู้รับทุน
+    recommended_chart: Sankey Diagram
+    alternatives: [Funnel Chart]
+    reason_th: Sankey แสดงการไหลจากรุ่นหรือสถานะการศึกษาไปสู่สถานะงานแบบ aggregate
+    caution_th: เส้นทางที่มีจำนวนน้อยกว่า minimum group size จะไม่ถูกแสดง
+    required_fields: [project_condition_status, employment_type]
+  geography:
+    label_th: ต้องการดูพื้นที่
+    recommended_chart: Geographic Bubble
+    alternatives: [Dot Ranking, Outcome Matrix]
+    reason_th: เปรียบเทียบขนาดโครงการและผลลัพธ์รายจังหวัดโดยไม่แสดงตำแหน่งบุคคล
+    caution_th: ชุดข้อมูลปัจจุบันยังไม่มีพิกัดหรือ GeoJSON จึงใช้การเปรียบเทียบรายจังหวัดแทนแผนที่ขอบเขต
+    required_fields: [province, target_graduation_success, target_employment_ready]
+  missingness:
+    label_th: ต้องการดูข้อมูลขาด
+    recommended_chart: Missingness Heatmap
+    alternatives: [Quality Matrix, Bullet Chart]
+    reason_th: Heatmap ช่วยระบุรุ่นหรือพื้นที่ที่ขาดข้อมูลติดตามในหลายฟิลด์พร้อมกัน
+    caution_th: สีแสดงความครบถ้วนของข้อมูล ไม่ใช่ผลลัพธ์ความสำเร็จของผู้รับทุน
+    required_fields: [cohort, employment_type, income_monthly_est]
+  multi_kpi:
+    label_th: ต้องการเปรียบเทียบหลาย KPI
+    recommended_chart: Dumbbell Plot
+    alternatives: [KPI Heatmap, Radar Chart]
+    reason_th: Dumbbell แสดงช่องว่างระหว่าง Completion และ Employment ของแต่ละกลุ่มได้ชัด
+    caution_th: ควรเปรียบเทียบ KPI ที่มีหน่วยเดียวกันและใช้ denominator ที่อธิบายได้
+    required_fields: [target_graduation_success, target_employment_ready]

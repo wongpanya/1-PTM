@@ -5,11 +5,14 @@ import pandas as pd
 from src.analytics.metrics import (
     apply_filters,
     data_quality_summary,
+    followup_coverage_by_group,
+    group_readiness_summary,
     grouped_counts,
     income_box_summary,
     income_summary,
     overview_metrics,
     rate_by_group,
+    readiness_scorecard,
     remove_small_groups,
     remove_forbidden_display_columns,
     safe_rate,
@@ -101,7 +104,60 @@ class MetricsTest(unittest.TestCase):
         income_row = quality.loc[quality["field"] == "income_monthly_est"].iloc[0]
         self.assertEqual(int(income_row["missing_count"]), 1)
         self.assertEqual(int(income_row["format_or_standard_issues"]), 2)
-        self.assertTrue(bool(income_row["model_ready"]))
+        self.assertFalse(bool(income_row["model_ready"]))
+        self.assertEqual(income_row["readiness_status"], "ต้องเก็บ/ปรับปรุงข้อมูล")
+
+    def test_readiness_distinguishes_features_targets_and_leakage(self):
+        df = pd.DataFrame({
+            "cohort": [1, 2],
+            "project_condition_status": ["completed", "active"],
+            "target_graduation_success": [1, 0],
+        })
+        definitions = {
+            "data_quality": {
+                "dashboard_ready_fields": ["cohort", "target_graduation_success"],
+                "analytics_ready_fields": ["cohort", "target_graduation_success"],
+                "policy_ready_fields": ["cohort", "project_condition_status"],
+                "ml_feature_fields": ["cohort"],
+                "ml_target_fields": ["target_graduation_success"],
+                "ml_leakage_fields": ["project_condition_status"],
+            }
+        }
+        quality = data_quality_summary(df, pd.DataFrame(), definitions)
+        target = quality.loc[quality["field"] == "target_graduation_success"].iloc[0]
+        leakage = quality.loc[quality["field"] == "project_condition_status"].iloc[0]
+        self.assertTrue(bool(target["ml_target"]))
+        self.assertEqual(target["readiness_status"], "Target: ห้ามใช้เป็น feature")
+        self.assertTrue(bool(leakage["ml_leakage_risk"]))
+        self.assertEqual(leakage["readiness_status"], "ตัดออกจาก ML feature")
+        scorecard = readiness_scorecard(quality, definitions)
+        self.assertEqual(set(scorecard["use_case"]), {"Dashboard", "Analytics", "Policy", "ML"})
+
+    def test_group_readiness_and_followup_suppress_small_groups(self):
+        df = pd.DataFrame({
+            "cohort": [1, 1, 1, 2, 2],
+            "province": ["A", "A", "A", "B", "B"],
+            "employment_type": ["private", None, "public", None, None],
+            "work_start_date": ["2020-01-01", None, None, None, None],
+            "income_monthly_est": [10000, None, 20000, None, None],
+            "field_job_fit_level": [3, None, 2, None, None],
+            "local_fit_level": [2, None, 3, None, None],
+            "target_tracking_risk": [0, 1, 0, 1, 1],
+            "target_graduation_success": [1, 1, 1, 0, 0],
+        })
+        definitions = {
+            "data_quality": {
+                "dashboard_ready_fields": ["cohort", "employment_type"],
+                "policy_ready_fields": ["province", "employment_type"],
+                "ml_feature_fields": ["cohort"],
+                "ml_target_fields": ["target_graduation_success"],
+            }
+        }
+        readiness = group_readiness_summary(df, "cohort", definitions, min_size=3)
+        self.assertEqual(list(readiness["cohort"]), [1])
+        coverage = followup_coverage_by_group(df, "cohort", min_size=3)
+        self.assertEqual(list(coverage["cohort"]), [1])
+        self.assertGreater(float(coverage.iloc[0]["followup_completeness"]), 0)
 
     def test_remove_forbidden_display_columns(self):
         df = pd.DataFrame({"odos_uid": ["a"], "phone_number": ["x"], "contract_id": ["y"]})

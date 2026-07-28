@@ -214,20 +214,278 @@ def field_completeness(df: pd.DataFrame) -> pd.DataFrame:
 
 def data_quality_summary(df: pd.DataFrame, issues_df: pd.DataFrame | None, definitions: dict[str, Any] | None = None) -> pd.DataFrame:
     definitions = definitions or metric_definitions()
-    dashboard_ready = set(definitions.get("data_quality", {}).get("dashboard_ready_fields", []))
-    model_ready = set(definitions.get("data_quality", {}).get("model_ready_fields", []))
-    to_collect = set(definitions.get("data_quality", {}).get("fields_to_collect", []))
+    quality_config = definitions.get("data_quality", {})
+    dashboard_fields = set(quality_config.get("dashboard_ready_fields", []))
+    analytics_fields = set(quality_config.get("analytics_ready_fields", []))
+    policy_fields = set(quality_config.get("policy_ready_fields", []))
+    ml_features = set(quality_config.get("ml_feature_fields", quality_config.get("model_ready_fields", [])))
+    ml_targets = set(quality_config.get("ml_target_fields", []))
+    aggregate_only = set(quality_config.get("aggregate_only_fields", []))
+    leakage_fields = set(quality_config.get("ml_leakage_fields", []))
+    to_collect = set(quality_config.get("fields_to_collect", []))
+    field_policies = quality_config.get("field_policies", {})
+    thresholds = quality_config.get("readiness_thresholds", {})
+    weights = quality_config.get("readiness_weights", {})
+    ready_threshold = float(thresholds.get("field_ready_score", 70))
+    completeness_weight = float(weights.get("completeness", 0.7))
+    validity_weight = float(weights.get("validity", 0.3))
     completeness = field_completeness(df)
+
     if issues_df is None or issues_df.empty or "field" not in issues_df:
-        issue_counts = pd.DataFrame(columns=["field", "format_or_standard_issues"])
+        issue_counts = pd.DataFrame(columns=["field", "format_or_standard_issues", "error_count", "warning_count"])
     else:
-        issue_counts = issues_df.groupby("field").size().reset_index(name="format_or_standard_issues")
+        working_issues = issues_df.copy()
+        severity = (
+            working_issues["severity"]
+            if "severity" in working_issues
+            else pd.Series("", index=working_issues.index)
+        )
+        working_issues["is_error"] = severity.eq("error").astype(int)
+        working_issues["is_warning"] = severity.eq("warning").astype(int)
+        issue_counts = (
+            working_issues.groupby("field")
+            .agg(
+                format_or_standard_issues=("field", "size"),
+                error_count=("is_error", "sum"),
+                warning_count=("is_warning", "sum"),
+            )
+            .reset_index()
+        )
+
     summary = completeness.merge(issue_counts, on="field", how="left")
-    summary["format_or_standard_issues"] = summary["format_or_standard_issues"].fillna(0).astype(int)
-    summary["dashboard_ready"] = summary["field"].isin(dashboard_ready)
-    summary["model_ready"] = summary["field"].isin(model_ready)
+    for column in ["format_or_standard_issues", "error_count", "warning_count"]:
+        summary[column] = summary[column].fillna(0).astype(int)
+    total = max(len(df), 1)
+    summary["missing_rate"] = (100 - summary["completeness_rate"]).round(2)
+    summary["issue_rate"] = (summary["format_or_standard_issues"] / total * 100).clip(upper=100).round(2)
+    summary["validity_rate"] = (100 - summary["issue_rate"]).round(2)
+    summary["quality_score"] = (
+        summary["completeness_rate"] * completeness_weight
+        + summary["validity_rate"] * validity_weight
+    ).round(2)
+    summary["dtype"] = summary["field"].map(lambda field: str(df[field].dtype))
+    summary["expected_type"] = summary["field"].map(_expected_type)
+    summary["dashboard_eligible"] = summary["field"].isin(dashboard_fields)
+    summary["analytics_eligible"] = summary["field"].isin(analytics_fields)
+    summary["policy_eligible"] = summary["field"].isin(policy_fields)
+    summary["ml_feature"] = summary["field"].isin(ml_features)
+    summary["ml_target"] = summary["field"].isin(ml_targets)
+    summary["aggregate_only"] = summary["field"].isin(aggregate_only)
+    summary["ml_leakage_risk"] = summary["field"].isin(leakage_fields)
+    meets_quality = summary["quality_score"] >= ready_threshold
+    summary["dashboard_ready"] = summary["dashboard_eligible"] & meets_quality
+    summary["analytics_ready"] = summary["analytics_eligible"] & meets_quality
+    summary["policy_ready"] = summary["policy_eligible"] & meets_quality
+    summary["model_ready"] = (summary["ml_feature"] | summary["ml_target"]) & meets_quality
     summary["needs_more_collection"] = summary["field"].isin(to_collect)
+    summary["cleaning_action"] = summary["field"].map(
+        lambda field: _field_action(field, field_policies, ml_features, ml_targets, aggregate_only, leakage_fields)
+    )
+    summary["cleaning_reason"] = summary["field"].map(
+        lambda field: _field_reason(field, field_policies, ml_features, ml_targets, aggregate_only, leakage_fields)
+    )
+    summary["readiness_status"] = summary.apply(
+        lambda row: _readiness_status(row, ready_threshold, float(thresholds.get("high_missing_rate", 40))),
+        axis=1,
+    )
     return summary
+
+
+def readiness_scorecard(
+    quality: pd.DataFrame,
+    definitions: dict[str, Any] | None = None,
+) -> pd.DataFrame:
+    """Summarize transparent readiness scores for each intended use case."""
+    definitions = definitions or metric_definitions()
+    config = definitions.get("data_quality", {})
+    use_cases = {
+        "Dashboard": config.get("dashboard_ready_fields", []),
+        "Analytics": config.get("analytics_ready_fields", []),
+        "Policy": config.get("policy_ready_fields", []),
+        "ML": [*config.get("ml_feature_fields", []), *config.get("ml_target_fields", [])],
+    }
+    threshold = float(config.get("readiness_thresholds", {}).get("field_ready_score", 70))
+    score_by_field = quality.set_index("field")["quality_score"].to_dict() if not quality.empty else {}
+    rows = []
+    for use_case, fields in use_cases.items():
+        unique_fields = list(dict.fromkeys(fields))
+        scores = [float(score_by_field.get(field, 0.0)) for field in unique_fields]
+        ready_count = sum(score >= threshold for score in scores)
+        score = round(sum(scores) / len(scores), 2) if scores else 0.0
+        rows.append(
+            {
+                "use_case": use_case,
+                "readiness_score": score,
+                "ready_fields": ready_count,
+                "required_fields": len(unique_fields),
+                "status": _score_label(score),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def group_readiness_summary(
+    df: pd.DataFrame,
+    group_column: str,
+    definitions: dict[str, Any] | None = None,
+    min_size: int | None = None,
+) -> pd.DataFrame:
+    """Compare data readiness across cohorts or geographies without exposing small groups."""
+    definitions = definitions or metric_definitions()
+    config = definitions.get("data_quality", {})
+    use_cases = {
+        "dashboard_readiness": config.get("dashboard_ready_fields", []),
+        "policy_readiness": config.get("policy_ready_fields", []),
+        "ml_readiness": [*config.get("ml_feature_fields", []), *config.get("ml_target_fields", [])],
+    }
+    if group_column not in df:
+        return pd.DataFrame(columns=[group_column, "count", *use_cases.keys()])
+
+    rows = []
+    working = df.assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
+    for group, subset in working.groupby(group_column, dropna=False):
+        row = {group_column: group, "count": int(len(subset))}
+        for score_name, fields in use_cases.items():
+            available = [field for field in dict.fromkeys(fields) if field in subset]
+            row[score_name] = (
+                round(float(subset[available].notna().mean().mean() * 100), 2)
+                if available
+                else 0.0
+            )
+        rows.append(row)
+    return remove_small_groups(pd.DataFrame(rows), min_size=min_size).sort_values("count", ascending=False)
+
+
+def outcome_by_group(
+    df: pd.DataFrame,
+    group_column: str,
+    min_size: int | None = None,
+) -> pd.DataFrame:
+    """Build aggregate education, employment, risk, and follow-up outcomes by group."""
+    targets = {
+        "completion_rate": "target_graduation_success",
+        "employment_rate": "target_employment_ready",
+        "scholarship_risk_rate": "target_scholarship_risk",
+        "tracking_gap_rate": "target_tracking_risk",
+    }
+    required = [group_column, *targets.values()]
+    if group_column not in df:
+        return pd.DataFrame(columns=[group_column, "count", *targets.keys()])
+    working = df.copy()
+    for field in required[1:]:
+        if field not in working:
+            working[field] = 0
+    working[group_column] = working[group_column].fillna(AGGREGATE_MISSING_LABEL)
+    aggregations = {"count": ("odos_uid", "size")} if "odos_uid" in working else {"count": (group_column, "size")}
+    aggregations.update({name: (field, "mean") for name, field in targets.items()})
+    result = working.groupby(group_column, dropna=False).agg(**aggregations).reset_index()
+    for name in targets:
+        result[name] = (result[name] * 100).round(2)
+    return remove_small_groups(result, min_size=min_size).sort_values("count", ascending=False)
+
+
+def followup_coverage_by_group(
+    df: pd.DataFrame,
+    group_column: str,
+    min_size: int | None = None,
+) -> pd.DataFrame:
+    """Measure availability of the main post-scholarship follow-up fields by group."""
+    followup_fields = [
+        "employment_type",
+        "work_start_date",
+        "income_monthly_est",
+        "field_job_fit_level",
+        "local_fit_level",
+    ]
+    if group_column not in df:
+        return pd.DataFrame(columns=[group_column, "count", "followup_completeness", "tracking_gap_rate"])
+    working = df.assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
+    rows = []
+    for group, subset in working.groupby(group_column, dropna=False):
+        available = [field for field in followup_fields if field in subset]
+        completeness = float(subset[available].notna().mean().mean() * 100) if available else 0.0
+        tracking = (
+            float(pd.to_numeric(subset.get("target_tracking_risk"), errors="coerce").fillna(0).mean() * 100)
+            if "target_tracking_risk" in subset
+            else 0.0
+        )
+        rows.append(
+            {
+                group_column: group,
+                "count": int(len(subset)),
+                "followup_completeness": round(completeness, 2),
+                "tracking_gap_rate": round(tracking, 2),
+            }
+        )
+    return remove_small_groups(pd.DataFrame(rows), min_size=min_size).sort_values(
+        ["followup_completeness", "count"], ascending=[True, False]
+    )
+
+
+def _expected_type(field: str) -> str:
+    if field.endswith("_date"):
+        return "date"
+    if field.startswith("target_") or field.endswith("_flag"):
+        return "binary"
+    if field.endswith("_level") or field.endswith("_years") or field.endswith("_numeric") or field.endswith("_est"):
+        return "numeric"
+    if field in {"source_id", "cohort", "birth_year_be", "province_code"}:
+        return "integer"
+    return "category/text"
+
+
+def _field_action(field, policies, ml_features, ml_targets, aggregate_only, leakage_fields) -> str:
+    if field in policies:
+        return policies[field].get("action_th", "ตรวจสอบตามนโยบายรายตัวแปร")
+    if field in ml_targets:
+        return "สร้างเป็น target และเก็บสูตรที่ตรวจสอบย้อนกลับได้"
+    if field in leakage_fields:
+        return "ใช้วิเคราะห์แบบ aggregate และตัดออกจาก ML feature"
+    if field in aggregate_only:
+        return "ใช้เฉพาะผลรวมและปกปิดกลุ่มขนาดเล็ก"
+    if field in ml_features:
+        return "ทำความสะอาดและประเมินก่อนใช้เป็น ML feature"
+    if field.endswith("_date"):
+        return "แปลงเป็นวันที่มาตรฐานและตรวจลำดับเวลา"
+    return "ปรับค่าว่างและมาตรฐานหมวดหมู่ก่อนวิเคราะห์"
+
+
+def _field_reason(field, policies, ml_features, ml_targets, aggregate_only, leakage_fields) -> str:
+    if field in policies:
+        return policies[field].get("reason_th", "กำหนดตามนโยบายข้อมูลของ Prototype")
+    if field in ml_targets:
+        return "เป็นผลลัพธ์ที่ต้องการทำนาย จึงห้ามใช้เป็น feature"
+    if field in leakage_fields:
+        return "เกิดพร้อมหรือหลังผลลัพธ์เป้าหมาย มีความเสี่ยงต่อ data leakage"
+    if field in aggregate_only:
+        return "มีความละเอียดสูง จึงอนุญาตเฉพาะการสรุปรวมตาม minimum group size"
+    if field in ml_features:
+        return "เป็นข้อมูลไม่ใช่ PII ที่มีศักยภาพเป็น feature เมื่อคุณภาพผ่านเกณฑ์"
+    return "ใช้เพื่ออธิบายข้อมูลที่มี แต่ยังไม่ได้รับรองเป็น feature หรือ KPI หลัก"
+
+
+def _readiness_status(row: pd.Series, threshold: float, high_missing_rate: float) -> str:
+    if bool(row["ml_target"]):
+        return "Target: ห้ามใช้เป็น feature"
+    if bool(row["ml_leakage_risk"]):
+        return "ตัดออกจาก ML feature"
+    if float(row["missing_rate"]) >= high_missing_rate:
+        return "ต้องเก็บ/ปรับปรุงข้อมูล"
+    if float(row["quality_score"]) < threshold:
+        return "ต้อง clean หรือทบทวนมาตรฐาน"
+    if bool(row["aggregate_only"]):
+        return "พร้อมใช้เฉพาะ Aggregate"
+    if bool(row["dashboard_eligible"] or row["analytics_eligible"] or row["policy_eligible"] or row["ml_feature"]):
+        return "พร้อมใช้"
+    return "ทบทวนก่อนใช้งาน"
+
+
+def _score_label(score: float) -> str:
+    if score >= 85:
+        return "พร้อมใช้"
+    if score >= 70:
+        return "พร้อมใช้แบบมีเงื่อนไข"
+    return "ต้องปรับปรุง"
 
 
 def load_phase4_issues() -> pd.DataFrame:

@@ -1,4 +1,4 @@
-schema_version: 0.2
+schema_version: 0.3
 principles:
   privacy: Show aggregate results only. Do not display row-level student records or PII.
   traceability: Every KPI displayed in Phase 5 must reference this file.
@@ -113,33 +113,164 @@ metrics:
     definition_th: การกระจายระดับความสอดคล้องของงานกับการพัฒนาพื้นที่หรือภูมิลำเนาตามข้อมูลที่มี
     supported_by_columns: [local_fit, local_fit_level]
 data_quality:
+  readiness_thresholds:
+    field_ready_score: 70
+    high_missing_rate: 40
+  readiness_weights:
+    completeness: 0.7
+    validity: 0.3
   dashboard_ready_fields:
     - odos_uid
     - cohort
+    - sex
+    - region
     - province
     - district
+    - project_condition_status
+    - current_status
     - current_country
     - current_field_group
     - employment_type
-    - target_graduation_success
-    - target_employment_ready
-  model_ready_fields:
-    - cohort
-    - province
-    - current_country
-    - current_field_group
-    - gpa_numeric
     - income_monthly_est
-    - study_duration_years
     - field_job_fit_level
     - local_fit_level
     - target_graduation_success
     - target_scholarship_risk
+    - target_tracking_risk
     - target_employment_ready
+  analytics_ready_fields:
+    - cohort
+    - sex
+    - region
+    - province
+    - district
+    - current_country
+    - current_field_group
+    - project_condition_status
+    - employment_type
+    - income_monthly_est
+    - field_job_fit_level
+    - local_fit_level
+    - target_graduation_success
+    - target_scholarship_risk
+    - target_tracking_risk
+    - target_employment_ready
+  policy_ready_fields:
+    - cohort
+    - region
+    - province
+    - district
+    - current_country
+    - current_field_group
+    - project_condition_status
+    - employment_type
+    - income_monthly_est
+    - field_job_fit_level
+    - local_fit_level
+    - target_graduation_success
+    - target_scholarship_risk
+    - target_tracking_risk
+    - target_employment_ready
+  ml_feature_fields:
+    - cohort
+    - sex
+    - region
+    - province
+    - current_country
+    - current_field_group
+    - gpa_numeric
+    - study_duration_years
+  ml_target_fields:
+    - target_graduation_success
+    - target_scholarship_risk
+    - target_tracking_risk
+    - target_employment_ready
+    - target_field_mismatch
+    - target_local_mismatch
+  model_ready_fields:
+    - cohort
+    - sex
+    - region
+    - province
+    - current_country
+    - current_field_group
+    - gpa_numeric
+    - study_duration_years
+    - target_graduation_success
+    - target_scholarship_risk
+    - target_tracking_risk
+    - target_employment_ready
+    - target_field_mismatch
+    - target_local_mismatch
+  aggregate_only_fields:
+    - odos_uid
+    - source_id
+    - district
+    - current_field
+    - employment_detail
+    - workplace_province_country
+  ml_leakage_fields:
+    - source_id
+    - odos_uid
+    - project_condition_status
+    - overall_status
+    - after_m6_status
+    - current_status
+    - employment_type
+    - employment_detail
+    - field_job_fit
+    - field_job_fit_level
+    - local_fit
+    - local_fit_level
+  field_policies:
+    odos_uid:
+      action_th: เก็บไว้เพื่อเชื่อมข้อมูลและนับแบบไม่ซ้ำ
+      reason_th: เป็นรหัสนามแฝง ห้ามแสดงระดับบุคคลและห้ามใช้เป็น ML feature
+    source_id:
+      action_th: เก็บไว้เฉพาะตรวจสอบย้อนกลับภายใน
+      reason_th: เป็นตัวระบุแถวต้นทาง ไม่มีความหมายเชิงพยากรณ์และเสี่ยงให้โมเดลจำข้อมูล
+    gpa_numeric:
+      action_th: แปลงเป็นตัวเลขช่วง 0-4
+      reason_th: ใช้เป็น feature ได้เมื่อผ่านเกณฑ์ completeness และต้องแยก train/test ตามรุ่นหรือเวลา
+    income_monthly_est:
+      action_th: แปลงช่วงรายได้เป็นค่ากลางรายเดือน
+      reason_th: ใช้สรุปผลแบบ aggregate; ไม่ใช้ทำนายผลจ้างงานเพราะเป็นข้อมูลหลังเกิดผลลัพธ์
+    study_duration_years:
+      action_th: คำนวณจากวันเริ่มเรียนและวันที่คาดว่าจะสำเร็จ
+      reason_th: ใช้ได้เมื่อวันที่ต้นทางถูกต้อง; ต้องตรวจเวลาอ้างอิงเพื่อป้องกัน leakage
+    project_condition_status:
+      action_th: ปรับมาตรฐานหมวดหมู่และใช้สร้าง target
+      reason_th: ใช้กับ Dashboard/Policy แต่ห้ามเป็น feature เมื่อทำนาย graduation target
+    employment_type:
+      action_th: ปรับมาตรฐานหมวดหมู่และใช้สร้าง target
+      reason_th: ใช้กับ Dashboard/Policy แต่ห้ามเป็น feature เมื่อทำนาย employment target
+    field_job_fit_level:
+      action_th: แปลงระดับความสอดคล้องเป็น 0-3
+      reason_th: เป็นข้อมูลผลลัพธ์หลังเรียน ใช้สรุปผลหรือเป็น target แต่ไม่ใช้เป็น feature ต้นทาง
+    local_fit_level:
+      action_th: แปลงระดับความสอดคล้องเป็น 0-3
+      reason_th: เป็นข้อมูลผลลัพธ์หลังเรียน ใช้สรุปผลหรือเป็น target แต่ไม่ใช้เป็น feature ต้นทาง
+    target_graduation_success:
+      action_th: สร้างจากสถานะตามเงื่อนไขโครงการ
+      reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
+    target_scholarship_risk:
+      action_th: สร้างจากกลุ่มสถานะความเสี่ยงที่กำหนด
+      reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
+    target_tracking_risk:
+      action_th: สร้างจากสถานะติดตามข้อมูล
+      reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
+    target_employment_ready:
+      action_th: สร้างจากประเภทการประกอบอาชีพ
+      reason_th: เป็น target สำหรับทดลอง ML ไม่ใช่ feature
   fields_to_collect:
     - standardized_program_name
+    - standardized_university_name
+    - actual_graduation_date
     - verified_graduation_date
     - verified_employment_date
     - verified_income_band
     - employer_sector_standard_code
+    - occupation_standard_code
+    - returned_to_domicile_date
+    - follow_up_date
     - province_policy_priority_year

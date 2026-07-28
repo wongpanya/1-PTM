@@ -95,6 +95,11 @@ validation:
       - SEC
       - EEC
       - SEC-Landbridge
+  cross_field_rules:
+    - completed_without_employment
+    - employed_without_work_start_date
+    - graduated_with_dropout_date
+    - risk_status_marked_employed
 outputs:
   directory: data/processed/phase4
   cleaned_dataset: cleaned_modeling_dataset_no_pii.csv
@@ -102,3 +107,4 @@ outputs:
   processing_log: processing_log.jsonl
   before_after_report_json: before_after_report.json
   before_after_report_md: before_after_report.md
+  field_cleaning_report: field_cleaning_report.csv

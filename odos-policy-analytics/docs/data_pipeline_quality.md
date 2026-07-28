@@ -25,7 +25,9 @@ The raw file is read-only and remains outside the public prototype repository.
 7. Parse dates and income.
 8. Calculate study duration from source dates.
 9. Validate duplicate IDs, date order, income range, dictionary values, and key-field completeness.
-10. Write cleaned data, validation issues, processing log, and before-after report.
+10. Validate cross-field relationships: graduation versus employment follow-up, employment versus work start date, graduation versus dropout date, and scholarship-risk versus employment status.
+11. Classify every output field by datatype, cleaning action, readiness, aggregate-only policy, ML role, and data-leakage risk.
+12. Write cleaned data, validation issues, processing log, before-after report, and field cleaning report.
 
 ## Outputs
 
@@ -33,6 +35,7 @@ Runtime outputs are local-only and ignored by Git:
 
 - `data/processed/phase4/cleaned_modeling_dataset_no_pii.csv`
 - `data/processed/phase4/validation_issues.csv`
+- `data/processed/phase4/field_cleaning_report.csv`
 - `data/processed/phase4/processing_log.jsonl`
 - `data/processed/phase4/before_after_report.json`
 - `data/processed/phase4/before_after_report.md`
@@ -44,6 +47,18 @@ Runtime outputs are local-only and ignored by Git:
 - Validity Score
 - Uniqueness Score
 - Consistency Score
+
+The field cleaning report adds:
+
+- Dashboard, Analytics, Policy, and ML eligibility
+- Field-level completeness, validity, and quality score
+- Cleaning action and reason
+- Aggregate-only classification
+- ML feature versus target classification
+- Data-leakage risk and exclusion reason
+
+The before-after report also records required/available sheets, required/missing
+columns, output datatypes, and use-case readiness scores.
 
 ## Rules
 

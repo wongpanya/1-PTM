@@ -10,6 +10,7 @@ from typing import Any
 import openpyxl
 import pandas as pd
 
+from src.analytics.metrics import data_quality_summary, metric_definitions, readiness_scorecard
 from src.cleaning.rules import (
     fit_level,
     government_preference_flag,
@@ -77,17 +78,34 @@ def run_phase4_pipeline(config_path: str = "config/phase4_pipeline.yaml") -> dic
 
     cleaned_df = pd.DataFrame(records)
     issues_df = pd.DataFrame(all_issues)
-    before_after = _before_after_report(raw_rows, cleaned_df, all_issues, cleaning_stats, source_hash, duplicate_source)
+    definitions = metric_definitions()
+    field_report = data_quality_summary(cleaned_df, issues_df, definitions)
+    readiness = readiness_scorecard(field_report, definitions)
+    before_after = _before_after_report(
+        raw_rows,
+        cleaned_df,
+        all_issues,
+        cleaning_stats,
+        source_hash,
+        duplicate_source,
+        workbook.sheetnames,
+        headers,
+        config,
+        field_report,
+        readiness,
+    )
     quality = _quality_scores(cleaned_df, all_issues, config)
     before_after["quality_scores"] = quality
 
     cleaned_path = output_dir / config["outputs"]["cleaned_dataset"]
     issues_path = output_dir / config["outputs"]["rejected_dataset"]
+    field_report_path = output_dir / config["outputs"]["field_cleaning_report"]
     report_json_path = output_dir / config["outputs"]["before_after_report_json"]
     report_md_path = output_dir / config["outputs"]["before_after_report_md"]
 
     cleaned_df.to_csv(cleaned_path, index=False, encoding="utf-8-sig")
     issues_df.to_csv(issues_path, index=False, encoding="utf-8-sig")
+    field_report.to_csv(field_report_path, index=False, encoding="utf-8-sig")
     report_json_path.write_text(json.dumps(before_after, ensure_ascii=False, indent=2), encoding="utf-8")
     report_md_path.write_text(_report_markdown(before_after), encoding="utf-8")
     _write_import_manifest(output_dir, source_hash, len(raw_rows), len(cleaned_df), duplicate_source)
@@ -101,7 +119,13 @@ def run_phase4_pipeline(config_path: str = "config/phase4_pipeline.yaml") -> dic
             "cleaned_rows": len(cleaned_df),
             "issue_count": len(all_issues),
             "duplicate_source": duplicate_source,
-            "output_files": [str(cleaned_path), str(issues_path), str(report_json_path), str(report_md_path)],
+            "output_files": [
+                str(cleaned_path),
+                str(issues_path),
+                str(field_report_path),
+                str(report_json_path),
+                str(report_md_path),
+            ],
         },
     )
     append_audit_event("phase4_pipeline_completed", {"rows": len(cleaned_df), "issues": len(all_issues)})
@@ -118,6 +142,7 @@ def run_phase4_pipeline(config_path: str = "config/phase4_pipeline.yaml") -> dic
         "outputs": {
             "cleaned_dataset": str(cleaned_path),
             "validation_issues": str(issues_path),
+            "field_cleaning_report": str(field_report_path),
             "before_after_report_json": str(report_json_path),
             "before_after_report_md": str(report_md_path),
             "processing_log": str(output_dir / config["outputs"]["processing_log"]),
@@ -208,8 +233,11 @@ def _clean_records(rows: list[tuple], config: dict[str, Any]) -> tuple[list[dict
     for index, row in enumerate(rows, start=1):
         for field in config["column_indexes"].keys():
             value = _cell(row, config, field)
-            if isinstance(value, str) and normalize_text(value) is None and value.strip().upper() in {"#NUM!", "#VALUE!", "#REF!", "#DIV/0!", "#N/A", "#NAME?"}:
-                stats["error_formula_to_null"] += 1
+            if isinstance(value, str) and normalize_text(value) is None:
+                if value.strip().upper() in {"#NUM!", "#VALUE!", "#REF!", "#DIV/0!", "#N/A", "#NAME?"}:
+                    stats["error_formula_to_null"] += 1
+                else:
+                    stats["blank_to_null"] += 1
         source_id = _cell(row, config, "source_id")
         odos_uid = f"ODOS{int(source_id):05d}" if isinstance(source_id, (int, float)) else f"ODOS{index:05d}"
         start_date = parse_iso_date(_cell(row, config, "study_start_date"))
@@ -313,6 +341,7 @@ def _validate_records(records: list[dict[str, Any]], dictionary: dict[str, set[s
         _date_order_issue(record, uid, issues, "study_start_date", "graduation_expected_date")
         _date_order_issue(record, uid, issues, "study_start_date", "study_end_dropout_date")
         _date_order_issue(record, uid, issues, "study_start_date", "work_start_date", severity="warning")
+        _cross_field_issues(record, uid, issues, config)
 
         income = record.get("income_monthly_est")
         if income is not None and not (income_min <= float(income) <= income_max):
@@ -338,6 +367,55 @@ def _date_order_issue(record, uid, issues, start_field, end_field, severity="err
         issues.append(PipelineIssue(severity, "date_order_invalid", uid, end_field, f"{end_field} is before {start_field}", f"{start}>{end}"))
 
 
+def _cross_field_issues(record, uid, issues, config):
+    enabled = set(config["validation"].get("cross_field_rules", []))
+    completed = record.get("target_graduation_success") == 1
+    employed = record.get("target_employment_ready") == 1
+    risk = record.get("target_scholarship_risk") == 1
+    tracking = record.get("target_tracking_risk") == 1
+
+    if "completed_without_employment" in enabled and completed and (not record.get("employment_type") or tracking):
+        issues.append(
+            PipelineIssue(
+                "warning",
+                "completed_without_employment_followup",
+                uid,
+                "employment_type",
+                "Completed recipient has no confirmed employment outcome",
+            )
+        )
+    if "employed_without_work_start_date" in enabled and employed and not record.get("work_start_date"):
+        issues.append(
+            PipelineIssue(
+                "warning",
+                "employed_without_work_start_date",
+                uid,
+                "work_start_date",
+                "Employment is recorded but work start date is missing",
+            )
+        )
+    if "graduated_with_dropout_date" in enabled and completed and record.get("study_end_dropout_date"):
+        issues.append(
+            PipelineIssue(
+                "error",
+                "graduated_with_dropout_date",
+                uid,
+                "study_end_dropout_date",
+                "Graduation status conflicts with a dropout/end date",
+            )
+        )
+    if "risk_status_marked_employed" in enabled and risk and employed:
+        issues.append(
+            PipelineIssue(
+                "warning",
+                "risk_status_marked_employed",
+                uid,
+                "employment_type",
+                "Scholarship-risk status conflicts with an employment-ready status",
+            )
+        )
+
+
 def _quality_scores(df: pd.DataFrame, issues: list[dict[str, str]], config: dict[str, Any]) -> dict[str, float]:
     total = max(len(df), 1)
     key_fields = config["validation"]["completeness_key_fields"]
@@ -356,7 +434,19 @@ def _quality_scores(df: pd.DataFrame, issues: list[dict[str, str]], config: dict
     }
 
 
-def _before_after_report(raw_rows, cleaned_df, issues, cleaning_stats, source_hash, duplicate_source):
+def _before_after_report(
+    raw_rows,
+    cleaned_df,
+    issues,
+    cleaning_stats,
+    source_hash,
+    duplicate_source,
+    sheet_names,
+    headers,
+    config,
+    field_report,
+    readiness,
+):
     issue_counts = pd.DataFrame(issues).groupby("field").size().sort_values(ascending=False).to_dict() if issues else {}
     return {
         "source_sha256": source_hash,
@@ -369,6 +459,27 @@ def _before_after_report(raw_rows, cleaned_df, issues, cleaning_stats, source_ha
         "error_count": sum(1 for issue in issues if issue["severity"] == "error"),
         "warning_count": sum(1 for issue in issues if issue["severity"] == "warning"),
         "issue_count_by_column": {str(k): int(v) for k, v in issue_counts.items()},
+        "structure_validation": {
+            "available_sheets": list(sheet_names),
+            "required_sheets": list(config["required_sheets"]),
+            "missing_sheets": sorted(set(config["required_sheets"]).difference(sheet_names)),
+            "required_columns": list(config["required_columns"]),
+            "missing_columns": sorted(set(config["required_columns"]).difference(headers)),
+            "output_datatypes": {column: str(dtype) for column, dtype in cleaned_df.dtypes.items()},
+        },
+        "readiness_scores": readiness.to_dict("records"),
+        "field_cleaning_summary": {
+            "ready": int((field_report["readiness_status"] == "พร้อมใช้").sum()),
+            "aggregate_only": int((field_report["readiness_status"] == "พร้อมใช้เฉพาะ Aggregate").sum()),
+            "needs_cleaning_or_review": int(
+                field_report["readiness_status"].isin(
+                    ["ต้อง clean หรือทบทวนมาตรฐาน", "ต้องเก็บ/ปรับปรุงข้อมูล", "ทบทวนก่อนใช้งาน"]
+                ).sum()
+            ),
+            "excluded_from_ml_features": int(
+                field_report["readiness_status"].isin(["ตัดออกจาก ML feature", "Target: ห้ามใช้เป็น feature"]).sum()
+            ),
+        },
     }
 
 
@@ -387,6 +498,12 @@ def _report_markdown(report: dict[str, Any]) -> str:
     ]
     for key, value in report["quality_scores"].items():
         lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Readiness Scores"])
+    for item in report["readiness_scores"]:
+        lines.append(
+            f"- {item['use_case']}: {item['readiness_score']} "
+            f"({item['ready_fields']}/{item['required_fields']} fields, {item['status']})"
+        )
     lines.extend(["", "## Cleaning Stats"])
     for key, value in report["cleaning_stats"].items():
         lines.append(f"- {key}: {value}")
