@@ -1,0 +1,16 @@
+# Private source data and generated record-level artifacts
+/690724 DB_ODOS Students+.xlsx
+/phase1_outputs/raw/
+/phase1_outputs/odos_policy_analytics_prototype.sqlite
+/phase1_outputs/data/core_scholarship_dataset.csv
+/phase1_outputs/data/data_dictionary.csv
+/phase1_outputs/data/education.csv
+/phase1_outputs/data/employment.csv
+/phase1_outputs/data/students.csv
+
+# Local generated documents and tool state
+/rendered_odos_plan/
+/.agents/
+/.claude/
+/.pytest_cache/
+/__pycache__/
