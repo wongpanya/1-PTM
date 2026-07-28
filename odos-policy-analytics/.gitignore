@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Local outputs
+data/raw/*
+!data/raw/README.md
+data/processed/*
+!data/processed/.gitkeep
+*.sqlite
+*.db
+*.parquet
+
+# Office/raw data safety
+*.xlsx
+!docs/data_dictionary.xlsx
+~$*
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

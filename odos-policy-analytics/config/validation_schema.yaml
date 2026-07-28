@@ -1,0 +1,69 @@
+schema_version: 0.1
+datasets:
+  development:
+    path: data/sample/development_sample.csv
+    expected_split: development
+    min_rows: 1
+  validation:
+    path: data/sample/validation_data.csv
+    expected_split: validation
+    min_rows: 1
+  modeling:
+    path: data/sample/modeling_dataset_no_pii.csv
+    min_rows: 1
+primary_key: odos_uid
+required_columns:
+  - odos_uid
+  - cohort
+  - province
+  - project_condition_status
+  - current_field_group
+  - employment_type
+  - target_graduation_success
+  - target_scholarship_risk
+  - target_tracking_risk
+  - target_employment_ready
+  - target_field_mismatch
+  - target_local_mismatch
+target_columns:
+  - target_graduation_success
+  - target_scholarship_risk
+  - target_tracking_risk
+  - target_employment_ready
+  - target_field_mismatch
+  - target_local_mismatch
+numeric_columns:
+  - cohort
+  - birth_year_be
+  - province_code
+  - gpa_numeric
+  - study_duration_years
+  - income_monthly_est
+  - field_job_fit_level
+  - local_fit_level
+  - job_satisfaction_level
+  - wants_government_flag
+forbidden_columns:
+  - contact_name
+  - contact_phone
+  - contract_no
+  - employment_cert_doc_no
+  - workplace_address
+  - officer_notes
+  - other_comments
+  - employer
+  - job_title
+  - income_raw
+  - gpa_raw
+allowed_values:
+  target_graduation_success: [0, 1]
+  target_scholarship_risk: [0, 1]
+  target_tracking_risk: [0, 1]
+  target_employment_ready: [0, 1]
+  target_field_mismatch: [0, 1]
+  target_local_mismatch: [0, 1]
+  split: [development, validation]
+quality_thresholds:
+  max_duplicate_primary_keys: 0
+  min_required_column_completeness_pct: 50
+  require_no_forbidden_columns: true

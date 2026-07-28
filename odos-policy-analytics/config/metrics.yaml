@@ -1,0 +1,145 @@
+schema_version: 0.2
+principles:
+  privacy: Show aggregate results only. Do not display row-level student records or PII.
+  traceability: Every KPI displayed in Phase 5 must reference this file.
+  limitation: Metrics describe available prototype data and must not be treated as final policy causality.
+metrics:
+  total_recipients:
+    label_th: จำนวนผู้รับทุนทั้งหมด
+    category: overview
+    formula: count_distinct(odos_uid)
+    numerator: odos_uid
+    denominator: not_applicable
+    display_format: integer
+    definition_th: นับจำนวนรหัสผู้รับทุนแบบไม่ระบุตัวตนที่ไม่ซ้ำกันในชุดข้อมูลที่ผ่านการลดการระบุตัวตนแล้ว
+    supported_by_columns: [odos_uid]
+  recipients_by_cohort:
+    label_th: จำนวนผู้รับทุนแต่ละรุ่น
+    category: overview
+    formula: count_distinct(odos_uid) grouped by cohort
+    numerator: odos_uid
+    denominator: not_applicable
+    display_format: grouped_count
+    definition_th: นับจำนวนผู้รับทุนไม่ซ้ำกันจำแนกตามรุ่น
+    supported_by_columns: [odos_uid, cohort]
+  completed_recipients:
+    label_th: จำนวนผู้สำเร็จการศึกษา
+    category: overview
+    formula: sum(target_graduation_success == 1)
+    numerator: target_graduation_success == 1
+    denominator: all_filtered_records
+    display_format: integer
+    definition_th: จำนวนผู้รับทุนที่ถูกจัดให้เป็นกลุ่มสำเร็จการศึกษาตามตัวแปรเป้าหมายจาก Phase 4
+    supported_by_columns: [target_graduation_success, project_condition_status]
+  employed_recipients:
+    label_th: จำนวนผู้มีงานทำ
+    category: overview
+    formula: sum(target_employment_ready == 1)
+    numerator: target_employment_ready == 1
+    denominator: all_filtered_records
+    display_format: integer
+    definition_th: จำนวนผู้รับทุนที่มีสถานะการประกอบอาชีพเข้ากลุ่มพร้อมทำงานหรือมีงานทำตามกฎ Phase 4
+    supported_by_columns: [target_employment_ready, employment_type]
+  countries_count:
+    label_th: จำนวนประเทศ
+    category: overview
+    formula: count_distinct(current_country where not null)
+    numerator: current_country
+    denominator: not_applicable
+    display_format: integer
+    definition_th: จำนวนประเทศปัจจุบันที่ปรากฏในข้อมูลหลังตัดค่าว่าง
+    supported_by_columns: [current_country]
+  field_groups_count:
+    label_th: จำนวนกลุ่มสาขาวิชา
+    category: overview
+    formula: count_distinct(current_field_group where not null)
+    numerator: current_field_group
+    denominator: not_applicable
+    display_format: integer
+    definition_th: จำนวนกลุ่มสาขาวิชาปัจจุบันที่ปรากฏในข้อมูลหลังตัดค่าว่าง
+    supported_by_columns: [current_field_group]
+  completion_rate:
+    label_th: Completion Rate
+    category: analytics
+    formula: sum(target_graduation_success == 1) / count_records * 100
+    numerator: target_graduation_success == 1
+    denominator: all_filtered_records
+    display_format: percent
+    definition_th: สัดส่วนผู้รับทุนที่สำเร็จการศึกษาจากข้อมูลที่มีอยู่ในชุดที่กรองแล้ว
+    supported_by_columns: [target_graduation_success]
+  dropout_rate:
+    label_th: Dropout Rate
+    category: analytics
+    formula: sum(target_scholarship_risk == 1) / count_records * 100
+    numerator: target_scholarship_risk == 1
+    denominator: all_filtered_records
+    display_format: percent
+    definition_th: สัดส่วนผู้รับทุนที่อยู่ในกลุ่มเสี่ยงด้านสถานะทุน เช่น ลาออก พ้นสภาพ เกินระยะเวลา หรือสละสิทธิ์ ตามกฎ Phase 4
+    supported_by_columns: [target_scholarship_risk, project_condition_status]
+  employment_rate:
+    label_th: Employment Rate
+    category: analytics
+    formula: sum(target_employment_ready == 1) / count_records * 100
+    numerator: target_employment_ready == 1
+    denominator: all_filtered_records
+    display_format: percent
+    definition_th: สัดส่วนผู้รับทุนที่มีสถานะประกอบอาชีพหรือพร้อมทำงานตามข้อมูล employment_type
+    supported_by_columns: [target_employment_ready, employment_type]
+  income_distribution:
+    label_th: Income Distribution
+    category: analytics
+    formula: distribution(income_monthly_est where not null)
+    numerator: income_monthly_est
+    denominator: records_with_income
+    display_format: histogram
+    definition_th: การกระจายรายได้ประมาณการรายเดือน เฉพาะรายการที่มีข้อมูลรายได้ที่แปลงเป็นตัวเลขได้
+    supported_by_columns: [income_monthly_est]
+  field_job_fit_rate:
+    label_th: Field-Job Fit
+    category: analytics
+    formula: average(field_job_fit_level) and distribution(field_job_fit)
+    numerator: field_job_fit_level
+    denominator: records_with_field_job_fit
+    display_format: percent_or_distribution
+    definition_th: การกระจายระดับความสอดคล้องระหว่างสาขาที่เรียนกับงานตามข้อมูลที่ผู้รับทุนรายงาน
+    supported_by_columns: [field_job_fit, field_job_fit_level]
+  local_development_fit_rate:
+    label_th: Local Development Fit
+    category: analytics
+    formula: average(local_fit_level) and distribution(local_fit)
+    numerator: local_fit_level
+    denominator: records_with_local_fit
+    display_format: percent_or_distribution
+    definition_th: การกระจายระดับความสอดคล้องของงานกับการพัฒนาพื้นที่หรือภูมิลำเนาตามข้อมูลที่มี
+    supported_by_columns: [local_fit, local_fit_level]
+data_quality:
+  dashboard_ready_fields:
+    - odos_uid
+    - cohort
+    - province
+    - district
+    - current_country
+    - current_field_group
+    - employment_type
+    - target_graduation_success
+    - target_employment_ready
+  model_ready_fields:
+    - cohort
+    - province
+    - current_country
+    - current_field_group
+    - gpa_numeric
+    - income_monthly_est
+    - study_duration_years
+    - field_job_fit_level
+    - local_fit_level
+    - target_graduation_success
+    - target_scholarship_risk
+    - target_employment_ready
+  fields_to_collect:
+    - standardized_program_name
+    - verified_graduation_date
+    - verified_employment_date
+    - verified_income_band
+    - employer_sector_standard_code
+    - province_policy_priority_year

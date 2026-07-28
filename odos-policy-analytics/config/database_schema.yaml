@@ -1,0 +1,125 @@
+schema_version: 0.1
+database_path: data/processed/odos_policy_analytics.sqlite
+tables:
+  students:
+    primary_key: odos_uid
+    columns:
+      odos_uid: TEXT
+      cohort: INTEGER
+      round: TEXT
+      scholarship_type: TEXT
+      sex: TEXT
+      birth_year_be: REAL
+      region: TEXT
+      province_code: REAL
+      province: TEXT
+      district: TEXT
+      economic_corridor: TEXT
+  education_records:
+    primary_key: odos_uid
+    columns:
+      odos_uid: TEXT
+      initial_country: TEXT
+      initial_field_group: TEXT
+      initial_field: TEXT
+      study_start_date: TEXT
+      graduation_expected_date: TEXT
+      current_country: TEXT
+      current_field_group: TEXT
+      current_field: TEXT
+      latest_degree: TEXT
+      gpa_numeric: REAL
+      study_duration_years: REAL
+  employment_records:
+    primary_key: odos_uid
+    columns:
+      odos_uid: TEXT
+      employment_type: TEXT
+      employment_detail: TEXT
+      workplace_province_country: TEXT
+      income_monthly_est: REAL
+      domicile_employment_relation: TEXT
+      field_job_fit: TEXT
+      field_job_fit_level: REAL
+      local_fit: TEXT
+      local_fit_level: REAL
+      wants_government: TEXT
+      wants_government_flag: REAL
+  scholarship_status:
+    primary_key: odos_uid
+    columns:
+      odos_uid: TEXT
+      project_condition_status: TEXT
+      overall_status: TEXT
+      after_m6_status: TEXT
+      current_status: TEXT
+      target_graduation_success: INTEGER
+      target_scholarship_risk: INTEGER
+      target_tracking_risk: INTEGER
+      target_employment_ready: INTEGER
+      target_field_mismatch: INTEGER
+      target_local_mismatch: INTEGER
+  geography_reference:
+    primary_key: geography_key
+    columns:
+      geography_key: TEXT
+      region: TEXT
+      province_code: REAL
+      province: TEXT
+      district: TEXT
+      economic_corridor: TEXT
+  external_indicators:
+    primary_key: null
+    columns:
+      indicator_year: INTEGER
+      indicator_type: TEXT
+      indicator_name: TEXT
+      geography_level: TEXT
+      geography_code: TEXT
+      field_code: TEXT
+      value: REAL
+      unit: TEXT
+      source: TEXT
+      source_date: TEXT
+      update_date: TEXT
+      reliability_level: TEXT
+      note: TEXT
+  data_import_log:
+    primary_key: import_id
+    columns:
+      import_id: TEXT
+      source_name: TEXT
+      source_path: TEXT
+      imported_at: TEXT
+      rows_imported: INTEGER
+      status: TEXT
+      notes: TEXT
+  risk_scores:
+    primary_key: risk_score_id
+    columns:
+      risk_score_id: TEXT
+      odos_uid: TEXT
+      score_type: TEXT
+      risk_score: REAL
+      component_summary: TEXT
+      created_at: TEXT
+      model_version: TEXT
+  policy_recommendations:
+    primary_key: recommendation_id
+    columns:
+      recommendation_id: TEXT
+      recommendation_type: TEXT
+      target_group: TEXT
+      recommendation_text: TEXT
+      evidence_summary: TEXT
+      limitation_note: TEXT
+      created_at: TEXT
+      rule_version: TEXT
+  audit_logs:
+    primary_key: audit_id
+    columns:
+      audit_id: TEXT
+      event_type: TEXT
+      event_time: TEXT
+      actor: TEXT
+      detail: TEXT
