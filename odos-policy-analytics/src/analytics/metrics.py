@@ -13,6 +13,11 @@ AGGREGATE_MISSING_LABEL = "ไม่ระบุ"
 SAFE_NAME_COLUMNS = {"standardized_university_name"}
 
 
+def aggregate_group_labels(series: pd.Series) -> pd.Series:
+    """Return group labels that can mix numeric categories with the missing label."""
+    return series.astype("object").where(series.notna(), AGGREGATE_MISSING_LABEL)
+
+
 def cleaned_dataset_path() -> Path:
     phase4_path = PROJECT_ROOT / "data/processed/phase4/cleaned_modeling_dataset_no_pii.csv"
     if phase4_path.exists():
@@ -174,7 +179,7 @@ def fit_rate_summary(df: pd.DataFrame, level_column: str, threshold: float = 2) 
 def top_counts(df: pd.DataFrame, column: str, limit: int = 10) -> pd.DataFrame:
     if column not in df:
         return pd.DataFrame(columns=[column, "count"])
-    counts = df[column].fillna(AGGREGATE_MISSING_LABEL).value_counts().head(limit)
+    counts = aggregate_group_labels(df[column]).value_counts().head(limit)
     return pd.DataFrame({column: counts.index, "count": counts.values})
 
 
@@ -182,9 +187,11 @@ def grouped_counts(df: pd.DataFrame, columns: list[str], limit: int = 20) -> pd.
     missing = [column for column in columns if column not in df]
     if missing:
         return pd.DataFrame(columns=[*columns, "count"])
+    working = df[columns].copy()
+    for column in columns:
+        working[column] = aggregate_group_labels(working[column])
     grouped = (
-        df[columns]
-        .fillna(AGGREGATE_MISSING_LABEL)
+        working
         .groupby(columns, dropna=False)
         .size()
         .reset_index(name="count")
@@ -212,7 +219,7 @@ def rate_by_group(df: pd.DataFrame, group_column: str, target_column: str) -> pd
         return pd.DataFrame(columns=[group_column, "count", "rate"])
     grouped = (
         df[[group_column, target_column]]
-        .assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
+        .assign(**{group_column: aggregate_group_labels(df[group_column])})
         .groupby(group_column, dropna=False)
         .agg(count=(target_column, "size"), numerator=(target_column, "sum"))
         .reset_index()
@@ -257,7 +264,7 @@ def income_box_summary(
         return pd.DataFrame(columns=[group_column, "count", "minimum", "q1", "median", "q3", "maximum"])
 
     working = df[[group_column, value_column]].copy()
-    working[group_column] = working[group_column].fillna(AGGREGATE_MISSING_LABEL)
+    working[group_column] = aggregate_group_labels(working[group_column])
     working[value_column] = pd.to_numeric(working[value_column], errors="coerce")
     working = working.dropna(subset=[value_column])
     validation = load_yaml("config/phase4_pipeline.yaml").get("validation", {})
@@ -431,7 +438,7 @@ def group_readiness_summary(
         return pd.DataFrame(columns=output_columns)
 
     rows = []
-    working = df.assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
+    working = df.assign(**{group_column: aggregate_group_labels(df[group_column])})
     for group, subset in working.groupby(group_column, dropna=False):
         row = {group_column: group, "count": int(len(subset))}
         for score_name, fields in use_cases.items():
@@ -471,7 +478,7 @@ def outcome_by_group(
     for field in required[1:]:
         if field not in working:
             working[field] = 0
-    working[group_column] = working[group_column].fillna(AGGREGATE_MISSING_LABEL)
+    working[group_column] = aggregate_group_labels(working[group_column])
     aggregations = {"count": ("odos_uid", "size")} if "odos_uid" in working else {"count": (group_column, "size")}
     aggregations.update({name: (field, "mean") for name, field in targets.items()})
     result = working.groupby(group_column, dropna=False).agg(**aggregations).reset_index()
@@ -499,7 +506,7 @@ def followup_coverage_by_group(
     if df.empty:
         return pd.DataFrame(columns=output_columns)
 
-    working = df.assign(**{group_column: df[group_column].fillna(AGGREGATE_MISSING_LABEL)})
+    working = df.assign(**{group_column: aggregate_group_labels(df[group_column])})
     rows = []
     for group, subset in working.groupby(group_column, dropna=False):
         available = [field for field in followup_fields if field in subset]
