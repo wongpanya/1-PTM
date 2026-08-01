@@ -1,0 +1,25 @@
+﻿indicator_year,indicator_type,indicator_name,geography_level,geography_code,field_code,value,unit,source,source_date,update_date,reliability_level,note
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มวิศวกรรม,national,TH,วิศวกรรม,58,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มวิทยาศาสตร์,national,TH,วิทยาศาสตร์,61,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มสาธารณสุข,national,TH,สาธารณสุข,64,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มบริหารจัดการ,national,TH,เศรษฐศาสตร์,67,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มครุศาสตร์,national,TH,ครูวิทยาศาสตร์,70,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มเกษตรและอาหาร,national,TH,อุตสาหกรรมอาหาร,73,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มดิจิทัล,national,TH,AI และดิจิทัล,76,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2024,workforce_demand,ความต้องการแรงงาน กลุ่มสิ่งแวดล้อม,national,TH,สิ่งแวดล้อม,79,index,synthetic_test_data,2024-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มวิศวกรรม,national,TH,วิศวกรรม,60,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มวิทยาศาสตร์,national,TH,วิทยาศาสตร์,63,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มสาธารณสุข,national,TH,สาธารณสุข,66,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มบริหารจัดการ,national,TH,เศรษฐศาสตร์,69,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มครุศาสตร์,national,TH,ครูวิทยาศาสตร์,72,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มเกษตรและอาหาร,national,TH,อุตสาหกรรมอาหาร,75,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มดิจิทัล,national,TH,AI และดิจิทัล,78,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2025,workforce_demand,ความต้องการแรงงาน กลุ่มสิ่งแวดล้อม,national,TH,สิ่งแวดล้อม,81,index,synthetic_test_data,2025-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มวิศวกรรม,national,TH,วิศวกรรม,62,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มวิทยาศาสตร์,national,TH,วิทยาศาสตร์,65,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มสาธารณสุข,national,TH,สาธารณสุข,68,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มบริหารจัดการ,national,TH,เศรษฐศาสตร์,71,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มครุศาสตร์,national,TH,ครูวิทยาศาสตร์,74,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มเกษตรและอาหาร,national,TH,อุตสาหกรรมอาหาร,77,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มดิจิทัล,national,TH,AI และดิจิทัล,80,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น
+2026,workforce_demand,ความต้องการแรงงาน กลุ่มสิ่งแวดล้อม,national,TH,สิ่งแวดล้อม,83,index,synthetic_test_data,2026-01-15,2026-07-29,test_only,ข้อมูลจำลองสำหรับทดสอบระบบเท่านั้น

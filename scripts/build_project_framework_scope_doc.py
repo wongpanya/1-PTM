@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from docx import Document
-from docx.enum.section import WD_SECTION_START
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
@@ -13,7 +12,6 @@ from docx.shared import Inches, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "ODOS_Project_Framework_and_Scope_Full_TH.docx"
-FRAMEWORK_IMAGE = ROOT / "69.07.27 Research Framework.png"
 
 FONT = "TH Sarabun New"
 BLUE = RGBColor(31, 78, 121)
@@ -133,6 +131,24 @@ def add_callout(doc, title, body):
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
 
+def add_framework_overview(doc):
+    add_heading(doc, "ภาพรวมกรอบงานระดับระบบ", 2)
+    add_table(
+        doc,
+        ["Input", "Data Management", "Analytics", "Decision Support", "Governance"],
+        [
+            [
+                "ข้อมูลผู้รับทุน การศึกษา การใช้ทุน ผลลัพธ์หลังเรียน และข้อมูลเสริมรายปี",
+                "นำเข้า ตรวจ schema ทำความสะอาด ทำมาตรฐาน จัดเก็บ SQLite/CSV และบันทึก lineage",
+                "Overview, Data Quality, Analytics, Risk Forecast, Policy Recommendation และ External Indicators",
+                "ข้อเสนอเชิงนโยบายแบบอธิบายได้ ปรับน้ำหนักได้ และต้องผ่าน human review",
+                "aggregate-first, no-direct-PII, role mockup, audit/export log, minimum group-size suppression",
+            ]
+        ],
+        [1.25, 1.35, 1.35, 1.3, 1.25],
+    )
+
+
 def setup_styles(doc):
     sec = doc.sections[0]
     sec.top_margin = Inches(0.8)
@@ -187,17 +203,15 @@ def build_doc():
     set_run_font(r, 22, True, ACCENT)
     meta = doc.add_paragraph()
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = meta.add_run("จัดทำจากเอกสารและโครงสร้างระบบใน repository | 29 กรกฎาคม 2026")
+    r = meta.add_run("ฉบับปรับปรุงตามสถานะระบบล่าสุด | 29 กรกฎาคม 2026")
     set_run_font(r, 14, False, MUTED)
 
-    if FRAMEWORK_IMAGE.exists():
-        doc.add_picture(str(FRAMEWORK_IMAGE), width=Inches(6.9))
-        doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    add_framework_overview(doc)
 
     add_callout(
         doc,
         "สาระสำคัญ",
-        "โครงการนี้เป็น Prototype สำหรับพิสูจน์ว่าข้อมูลผู้รับทุน 1 อำเภอ 1 ทุน สามารถพัฒนาเป็นระบบสนับสนุนการวิเคราะห์และข้อเสนอเชิงนโยบายได้จริง โดยเน้น dashboard, data quality, analytics, risk/forecast, policy recommendation, external indicators และ governance ภายใต้หลัก aggregate-first และไม่ใช้เป็นระบบตัดสินใจจัดสรรทุนอัตโนมัติ",
+        "โครงการนี้เป็น Prototype สำหรับพิสูจน์ว่าข้อมูลผู้รับทุน 1 อำเภอ 1 ทุน สามารถพัฒนาเป็นระบบสนับสนุนการวิเคราะห์และข้อเสนอเชิงนโยบายได้จริง โดยเน้น dashboard, data quality, analytics, risk/forecast, policy recommendation, external indicators, governance และ help/documentation ภายใต้หลัก aggregate-first, no-direct-PII และไม่ใช้เป็นระบบตัดสินใจจัดสรรทุนอัตโนมัติ",
     )
 
     doc.add_page_break()
@@ -219,7 +233,8 @@ def build_doc():
             ["Data Management", "รวมข้อมูล ทำความสะอาด ทำมาตรฐาน และเตรียมฐานข้อมูลกลางสำหรับการวิเคราะห์"],
             ["Data Analytics", "วิเคราะห์ภาพรวม วินิจฉัยปัญหา ประเมินแนวโน้ม และเสนอทางเลือกเชิงนโยบาย"],
             ["Key Forecast", "ประเมินความต้องการกำลังคน สาขาอนาคต ROI/SROI โอกาสการมีงานทำ brain drain graduation success area allocation leadership national impact และ scholarship risk"],
-            ["Policy & Decision Support", "แปลงผลวิเคราะห์เป็นข้อเสนอที่อธิบายได้ และให้ผู้เชี่ยวชาญใช้พิจารณา"],
+            ["Policy & Decision Support", "แปลงผลวิเคราะห์เป็นข้อเสนอที่อธิบายได้ ปรับน้ำหนักได้ และให้ผู้เชี่ยวชาญใช้พิจารณา"],
+            ["Help & Documentation", "ค้นหาคู่มือ FAQ และถามผู้ช่วย Local AI จากเอกสารโครงการ โดยไม่ส่งฐานข้อมูลผู้รับทุนหรือ PII"],
             ["Ultimate Outcome", "สนับสนุนกำลังคนคุณภาพสูง ลดความเหลื่อมล้ำ สร้างผลตอบแทนทางเศรษฐกิจและสังคม และสนับสนุน SDGs"],
         ],
         [1.5, 5.0],
@@ -229,10 +244,11 @@ def build_doc():
     add_para(doc, "ขอบเขตงานรอบ Prototype ครอบคลุมการสร้างระบบต้นแบบแบบ local/prototype โดยใช้ Streamlit, Python, Pandas, Plotly และ SQLite/CSV เป็นแกนหลัก ข้อมูลหลักมาจาก sample หรือ cleaned dataset ที่ไม่มี direct PII และเน้นการสาธิต workflow มากกว่าการให้บริการ production")
     add_bullet(doc, "ใช้ข้อมูลเท่าที่มีใน project เป็นฐานหลัก และไม่อ่าน raw Excel ทุกครั้งใน runtime ของ web app")
     add_bullet(doc, "ใช้ฐานข้อมูลกลางแบบ local/prototype เช่น SQLite และไฟล์ CSV ที่ผ่านการเตรียมข้อมูล")
-    add_bullet(doc, "สร้าง web dashboard 7 หน้า ได้แก่ Overview, Data Quality, Analytics, Risk & Forecast, Policy Recommendation, External Indicators และ Governance")
+    add_bullet(doc, "สร้าง web dashboard 8 หน้า ได้แก่ Overview, Data Quality, Analytics, Risk Forecast, Policy Recommendation, External Indicators, Governance และ Help & Documentation")
     add_bullet(doc, "พัฒนา risk score และ policy recommendation แบบอธิบายได้ โดยใช้ rule-based logic หรือ model เบื้องต้น")
     add_bullet(doc, "จัดทำ template สำหรับ external indicators รายปี และ governance mockup เช่น PII masking, role concept, audit/export log")
-    add_bullet(doc, "รองรับการทดสอบ acceptance, privacy check, data validation และ handover สำหรับผู้ใช้งานทดลอง")
+    add_bullet(doc, "รองรับการค้นหาเอกสารและ AI-assisted help ผ่าน Local AI/Ollama โดยจำกัดเฉพาะเอกสารโครงการ ไม่เชื่อมฐานข้อมูลรายบุคคล")
+    add_bullet(doc, "รองรับการทดสอบ acceptance, privacy check, data validation, label validation และ handover สำหรับผู้ใช้งานทดลอง")
 
     add_heading(doc, "4. สิ่งที่อยู่นอกขอบเขต", 1)
     add_para(doc, "เพื่อให้ความคาดหวังชัดเจน Prototype ไม่ครอบคลุมงาน production ที่ต้องมี security, reliability, compliance และ operating model เต็มรูปแบบ")
@@ -241,9 +257,10 @@ def build_doc():
         "authentication/authorization แบบเต็มรูปแบบและ identity lifecycle",
         "security hardening, encryption, monitoring, backup, disaster recovery และ SLA",
         "database server กลางหรือ data warehouse production",
-        "machine learning production pipeline ที่ผ่าน leakage review, calibration และ monitoring",
+        "machine learning production pipeline ที่ผ่าน leakage review, calibration, monitoring และ formal production approval",
         "API เชื่อมโยงข้อมูลภายนอกอัตโนมัติ",
         "การตัดสินใจจัดสรรทุนอัตโนมัติ",
+        "AI ภายนอกหรือ cloud AI ที่ส่งข้อมูลออกนอกเครื่องโดยไม่มี privacy/DPA review",
         "PDPA workflow เต็มรูปแบบและกระบวนการอนุมัติ/เก็บรักษาข้อมูลระดับ production",
     ]:
         add_bullet(doc, item)
@@ -257,6 +274,7 @@ def build_doc():
             ["นักวิเคราะห์ข้อมูล/นโยบาย", "สำรวจข้อมูล เปรียบเทียบมิติ วิเคราะห์เหตุผล", "filter, chart, metric definition, risk explanation"],
             ["เจ้าหน้าที่ดูแลข้อมูล", "ตรวจคุณภาพข้อมูล เตรียมชุดข้อมูล และติดตามข้อผิดพลาด", "validation issues, data dictionary, cleaning report, import log"],
             ["เจ้าของ governance/ข้อมูล", "ตรวจการใช้ข้อมูล บทบาท การ export และข้อจำกัด", "PII masking, audit/export log, aggregate-only policy"],
+            ["ผู้ใช้ทดลอง/ผู้ส่งมอบงาน", "ค้นหาคู่มือ เรียนรู้ขั้นตอน และถามคำถามจากเอกสาร", "Help Documentation, FAQ, Local AI assistant"],
         ],
         [1.6, 2.4, 2.5],
     )
@@ -273,6 +291,7 @@ def build_doc():
             ["Policy Recommendation", "จัดอันดับข้อเสนอเชิงนโยบายจากสูตรและน้ำหนัก", "field recommendation, area-based allocation, weight adjustment, evidence columns"],
             ["External Indicators", "รองรับข้อมูลภายนอกรายปี", "template ต้นทุน ตลาดแรงงาน รายได้ GDP/จังหวัด SDGs policy priority"],
             ["Governance", "แสดงแนวทางกำกับข้อมูลและ privacy", "role mockup, minimum group size, PII masking, audit log, export policy"],
+            ["Help & Documentation", "ค้นหาเอกสาร FAQ และถาม Local AI จากเอกสารโครงการ", "documentation search, quick links, FAQ, Ollama localhost assistant, privacy warning"],
         ],
         [1.35, 2.2, 2.95],
     )
@@ -283,10 +302,10 @@ def build_doc():
         doc,
         ["ประเภท", "รายการ"],
         [
-            ["Input หลัก", "DB_Students, Remark, no-PII sample, validation data, annual external indicators template"],
+            ["Input หลัก", "DB_Students, Remark, no-PII sample, validation data, annual external indicators template, label review template"],
             ["Output Phase 1/4", "cleaned dataset, data dictionary, validation issues, field cleaning report, processing log, import manifest"],
             ["ฐานข้อมูล Prototype", "students, education_records, employment_records, scholarship_status, geography_reference, external_indicators, data_import_log, risk_scores, policy_recommendations, audit_logs"],
-            ["นโยบายข้อมูล", "raw data ไม่แก้ไข, failed records ไม่ถูกลบ, issues ถูกบันทึก, direct PII ไม่แสดงบน dashboard และไม่ export"],
+            ["นโยบายข้อมูล", "raw data ไม่แก้ไข, failed records ไม่ถูกลบ, issues ถูกบันทึก, direct PII ไม่แสดงบน dashboard และไม่ export; Help/AI ไม่เชื่อมฐานข้อมูลผู้รับทุน"],
         ],
         [1.7, 4.8],
     )
@@ -297,7 +316,8 @@ def build_doc():
     add_bullet(doc, "Data processing: Python + Pandas")
     add_bullet(doc, "Database: SQLite และ CSV สำหรับ local/prototype")
     add_bullet(doc, "Visualization: Plotly")
-    add_bullet(doc, "Testing: Pytest และ acceptance scripts")
+    add_bullet(doc, "Testing: Pytest, validation scripts, privacy check, label validation และ Phase 8 acceptance script")
+    add_bullet(doc, "Help AI: Ollama/localhost สำหรับตอบจากเอกสารโครงการเท่านั้น และยังใช้ได้แม้ไม่เปิด AI ผ่าน document search")
     add_bullet(doc, "Deployment option: Streamlit Community Cloud หรือ Hugging Face Spaces")
 
     add_heading(doc, "9. Data Pipeline และ Data Quality", 1)
@@ -341,15 +361,32 @@ def build_doc():
         ],
         [1.8, 4.7],
     )
+    add_para(doc, "สถานะล่าสุดของ Prototype อนุญาตให้ใช้ Label ทั้ง 8 รายการสำหรับ prototype ML experiment only ตั้งแต่วันที่ 2026-07-28 แต่ยังไม่ใช่ production approval การใช้ผลกับบุคคลจริงหรือการจัดสรรทุนจริงยังต้องผ่านผู้เชี่ยวชาญและ governance gate")
+    add_bullet(doc, "Label workflow ต้อง freeze source snapshot, เตรียม evidence, ตรวจ human approval, ตรวจ fairness/privacy และแยก train/test ตาม cohort หรือเวลา")
+    add_bullet(doc, "Agent ช่วยเตรียม ตรวจ และจัดคิว review ได้ แต่ไม่ทดแทน Data owner, domain expert, Policy owner หรือ DPO")
 
-    add_heading(doc, "12. Privacy, Security และ Display Rules", 1)
+    add_heading(doc, "12. Help, Documentation และ AI-assisted Integration", 1)
+    add_para(doc, "ระบบล่าสุดมีหน้า Help & Documentation เพิ่มขึ้น เพื่อให้ผู้ใช้ค้นหาคู่มือ เรียนรู้ขั้นตอนสำคัญ อ่าน FAQ และถามผู้ช่วย AI ที่ทำงานภายในเครื่องจากเอกสารของโครงการ")
+    add_table(
+        doc,
+        ["ส่วน", "ขอบเขต", "ข้อกำกับ"],
+        [
+            ["Documentation Search", "ค้นหาและเปิดเอกสารใน docs/*.md", "ใช้เฉพาะเอกสารโครงการ ไม่ดึงข้อมูลรายบุคคล"],
+            ["FAQ", "ตอบคำถามใช้งาน เช่น target, forecast, privacy และ AI", "เป็นคำตอบเชิงคู่มือ ไม่ใช่คำตัดสินเชิงนโยบาย"],
+            ["Local AI/Ollama", "ถามตอบจากเอกสารผ่าน endpoint localhost", "จำกัด localhost และไม่ส่งฐานข้อมูลผู้รับทุนหรือ PII"],
+            ["Privacy Warning", "เตือนห้ามวางชื่อ เลขบัตร อีเมล เบอร์โทรศัพท์ หรือข้อมูลระบุตัวบุคคล", "หากเปลี่ยนไปใช้ AI ภายนอก ต้องผ่าน Privacy, DPA และนโยบายหน่วยงานก่อน"],
+        ],
+        [1.5, 3.0, 2.0],
+    )
+
+    add_heading(doc, "13. Privacy, Security และ Display Rules", 1)
     add_para(doc, "Prototype ใช้หลัก aggregate-first และ no-direct-PII โดยค่าเริ่มต้น ข้อมูลที่ห้ามแสดงหรือ export ได้แก่ ชื่อ-สกุลผู้ติดต่อ หมายเลขโทรศัพท์ เลขที่สัญญารับทุน เลขเอกสารรับรอง ที่อยู่ละเอียด และหมายเหตุที่อาจมีข้อมูลอ่อนไหว")
     add_bullet(doc, "แสดงข้อมูลรวมระดับ cohort, province, region, country, field group, status และ employment type")
     add_bullet(doc, "ใช้รหัสผู้รับทุนแบบไม่ระบุตัวตน เช่น odos_uid เมื่อจำเป็น")
     add_bullet(doc, "export เฉพาะข้อมูล aggregate และต้องตรวจสิทธิ์ตาม role mockup")
     add_bullet(doc, "มี privacy_check.py, governance/privacy.py และ test_privacy.py เป็นชั้นตรวจสอบใน Prototype")
 
-    add_heading(doc, "13. เฟสงานและสถานะ", 1)
+    add_heading(doc, "14. เฟสงานและสถานะ", 1)
     add_table(
         doc,
         ["Phase", "เป้าหมาย", "สถานะ/ผลลัพธ์"],
@@ -362,27 +399,28 @@ def build_doc():
             ["5", "Build dashboard/analytics", "Overview, Data Quality และ Analytics implemented"],
             ["6", "Risk/forecast/policy", "rule-based risk, graduation status และ policy ranking implemented"],
             ["7", "External indicators/governance", "template, PII masking, audit/export controls implemented"],
-            ["8", "Test, deploy, handover", "acceptance checks และ handover docs implemented"],
+            ["8", "Test, deploy, handover", "functional, data, privacy, deployment, help และ handover acceptance checks implemented"],
             ["9", "Expand to production", "อนาคต: database server, auth, ML, API, PDPA workflow"],
         ],
         [0.7, 2.1, 3.7],
     )
 
-    add_heading(doc, "14. Acceptance Criteria", 1)
+    add_heading(doc, "15. Acceptance Criteria", 1)
     add_para(doc, "Prototype Phase 0-8 ถือว่าผ่านเมื่อระบบและเอกสารสามารถแสดงผลลัพธ์หลักได้ครบ พร้อมข้อจำกัดที่โปร่งใส")
     for item in [
         "มี scope ที่ล็อกขอบเขตและข้อจำกัดชัดเจน",
         "มีฐานข้อมูลกลางหรือ cleaned dataset ที่ใช้รันระบบได้",
-        "มี web app ที่เปิดได้และมี 7 หน้าหลัก",
+        "มี web app ที่เปิดได้และมีหน้าหลักตาม navigation ล่าสุด รวม Help & Documentation",
         "Overview, Data Quality และ Analytics แสดง metric/filter/chart ได้ถูกต้องตามนิยาม",
         "Risk & Forecast มีคะแนนเบื้องต้น คำอธิบายที่มา rule version และ limitations",
         "Policy Recommendation แสดงข้อเสนอพร้อมเหตุผลจากข้อมูลและรองรับการปรับน้ำหนัก",
         "External Indicators มี template สำหรับข้อมูลรายปี และ Governance แสดง PII masking, role concept, audit/export log",
+        "Help & Documentation ค้นหาเอกสารได้ และ Local AI จำกัดเฉพาะ localhost/เอกสารโครงการโดยไม่แตะฐานข้อมูลผู้รับทุน",
         "มี README คู่มือเบื้องต้น handover scenario acceptance scripts และ roadmap สู่ production",
     ]:
         add_bullet(doc, item)
 
-    add_heading(doc, "15. ข้อจำกัดและความเสี่ยงที่ต้องสื่อสาร", 1)
+    add_heading(doc, "16. ข้อจำกัดและความเสี่ยงที่ต้องสื่อสาร", 1)
     for item in [
         "ระบบเป็น local SQLite/Streamlit Prototype ไม่ใช่ multi-user production service",
         "role selection เป็น mockup ยังไม่มี authentication/authorization จริง",
@@ -390,11 +428,12 @@ def build_doc():
         "risk rules และ thresholds ต้องได้รับ expert approval ก่อนใช้งานเชิงปฏิบัติการ",
         "ยังไม่เปิดใช้ ML forecasting จนกว่าจะมีนิยาม outcome, train/test design, leakage control และ monitoring",
         "upload validation ยังไม่มี staging, approval workflow, rollback และ async processing ระดับ production",
+        "Local AI เป็น optional helper สำหรับเอกสาร ไม่ใช่ระบบอนุมัติ ไม่ใช่โมเดลนโยบาย และต้องระวังไม่ป้อน PII ลงช่องถาม",
         "data quality warnings ต้องได้รับการแก้ไขหรือยอมรับโดย data owner ก่อนใช้ประกอบนโยบายจริง",
     ]:
         add_bullet(doc, item)
 
-    add_heading(doc, "16. ข้อมูลเพิ่มเติมที่ควรจัดหา", 1)
+    add_heading(doc, "17. ข้อมูลเพิ่มเติมที่ควรจัดหา", 1)
     for item in [
         "ข้อมูลความต้องการแรงงานรายปีตามสาขาและพื้นที่ พร้อมวันที่แหล่งข้อมูลและระดับความน่าเชื่อถือ",
         "ข้อมูลต้นทุนทุน ค่าใช้จ่าย และค่าครองชีพรายปลายทางหรือพื้นที่",
@@ -402,27 +441,34 @@ def build_doc():
         "ข้อมูลผลลัพธ์หลังจบทุนที่มีวันที่รายงาน ประเภทงาน กลุ่มอาชีพ รายได้ และสถานะกลับพื้นที่",
         "taxonomy ของพื้นที่และสาขาวิชาที่มี code, effective date และ mapping history",
         "กฎความเสี่ยง KPI thresholds recommendation weights และ sign-off records ที่ผ่านผู้เชี่ยวชาญ",
+        "แนวทางใช้งาน AI ช่วยงานเอกสารในระดับองค์กร รวมถึง privacy review และ DPA หากใช้ endpoint ภายนอก",
         "ข้อกำหนด production security, audit retention, backup, recovery และ PDPA operating procedures",
     ]:
         add_bullet(doc, item)
 
-    add_heading(doc, "17. Roadmap สู่ Production", 1)
+    add_heading(doc, "18. Roadmap สู่ Production", 1)
     add_para(doc, "การเข้าสู่ Phase 9 ควรเริ่มหลังจาก data owner รับรองนิยามและคุณภาพข้อมูล policy owner รับรองกฎและข้อเสนอ legal/governance owner อนุมัติแบบการใช้ข้อมูล และมีแผน hosting/security ที่ได้รับงบประมาณ")
     add_number(doc, "ยืนยัน data definition, label, KPI และ taxonomy ที่ใช้ร่วมกันทั้งโครงการ")
     add_number(doc, "ออกแบบ production architecture: database server, API, authentication, authorization, backup, monitoring และ deployment")
     add_number(doc, "จัดทำ PDPA workflow, data use notice, retention rules, access review และ incident response")
     add_number(doc, "ยกระดับ risk/forecast เป็น validated ML workflow เมื่อข้อมูลและ governance พร้อม")
+    add_number(doc, "กำหนด AI assistance policy ว่าส่วนใดใช้ local-only ได้ ส่วนใดต้องห้าม และเงื่อนไขสำหรับ external AI")
     add_number(doc, "สร้าง operating model สำหรับ data refresh, model/rule review, policy sign-off และ change management")
 
-    add_heading(doc, "18. แหล่งข้อมูลที่ใช้จัดทำเอกสาร", 1)
+    add_heading(doc, "19. แหล่งข้อมูลที่ใช้จัดทำเอกสาร", 1)
     for item in [
         "PROJECT_SCOPE.md และ odos-policy-analytics/PROJECT_SCOPE.md",
         "odos-policy-analytics/README.md",
         "odos-policy-analytics/docs/architecture.md",
         "odos-policy-analytics/docs/data_pipeline_quality.md",
         "odos-policy-analytics/docs/risk_forecast_policy.md",
+        "odos-policy-analytics/docs/external_indicators_governance.md",
+        "odos-policy-analytics/docs/agents_and_labeling.md",
+        "odos-policy-analytics/docs/deployment.md",
+        "odos-policy-analytics/docs/acceptance_tests.md",
         "odos-policy-analytics/docs/phase8_handover.md",
-        "69.07.27 Research Framework.png",
+        "odos-policy-analytics/app.py และ pages/08_help_documentation.py",
+        "odos-policy-analytics/config/app_config.yaml",
     ]:
         add_bullet(doc, item)
 
